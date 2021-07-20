@@ -16,6 +16,5 @@ embed2=discord.Embed(title="another title")
 embed3=discord.Embed(title="yet another title")
 pages=[embed1,embed2,embed3]
 
-await Paginator(bot=self.bot,ctx=ctx,pages=pages,content="Hello there",prevLabel="Back",nextLabel="Forward",
-        prevEmoji="♥",nextEmoji="♥",prevStyle=1,nextStyle=2,indexStyle=3,timeout=10)
+await Paginator(bot=bot,ctx=ctx,pages=pages,content="Hello there")
 ```
