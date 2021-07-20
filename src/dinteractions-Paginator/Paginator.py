@@ -1,6 +1,7 @@
 import random
 from asyncio import TimeoutError
 from typing import Optional, Union
+import typing
 
 import discord
 from discord.ext import commands
@@ -18,7 +19,7 @@ from discord_slash.utils.manage_components import (
 async def Paginator(
     bot: commands.bot,
     ctx: SlashContext,
-    pages: list[discord.Embed],
+    pages: typing.List[discord.Embed],
     content: Optional[str] = None,
     prevLabel: str = "Previous",
     nextLabel: str = "Next",
@@ -81,9 +82,13 @@ async def Paginator(
             if button_context.component_id == f"{bid}-prev" and index > 0:
                 index = index - 1  # lowers index by 1
                 if index == 0:
-                    controls["components"][0]["disabled"] = True  # Disables the previous button
+                    controls["components"][0][
+                        "disabled"
+                    ] = True  # Disables the previous button
                 controls["components"][2]["disabled"] = False  # Enables Next Button
-                controls["components"][1]["label"] = f"Page {index+1}/{top}"  # updates the index
+                controls["components"][1][
+                    "label"
+                ] = f"Page {index+1}/{top}"  # updates the index
                 await button_context.edit_origin(
                     content=content, embed=pages[index], components=[controls]
                 )
@@ -91,10 +96,14 @@ async def Paginator(
             if button_context.component_id == f"{bid}-next" and index < top - 1:
                 index = index + 1  # add 1 to the index
                 if index == top - 1:
-                    controls["components"][2]["disabled"] = True  # disables the next button
+                    controls["components"][2][
+                        "disabled"
+                    ] = True  # disables the next button
                 controls["components"][0]["disabled"] = False  # enables previous button
 
-                controls["components"][1]["label"] = f"Page {index+1}/{top}"  # updates the index
+                controls["components"][1][
+                    "label"
+                ] = f"Page {index+1}/{top}"  # updates the index
                 await button_context.edit_origin(
                     content=content, embed=pages[index], components=[controls]
                 )
