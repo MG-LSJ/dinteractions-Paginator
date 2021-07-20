@@ -7,7 +7,7 @@ This simple example shows how to easily create interactive, multiple page embeds
 import discord
 import discord_slash
 from discord_slash import SlashCommand, SlashContext
-from discord_slash.utils import Paginator
+from dinteractions_Paginator import Paginator
 
 @slash.slash(name="command")
 async def command(ctx:SlashContext)
