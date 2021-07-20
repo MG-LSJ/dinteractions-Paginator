@@ -12,10 +12,10 @@ setup(
     author="Jugador123",
     author_email="momocordova@gmail.com",
     license="GNU",
-    packages=["Paginator.py"],
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: GNU License",
+        "Development Status :: 4 - Beta",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
     ],
 )
