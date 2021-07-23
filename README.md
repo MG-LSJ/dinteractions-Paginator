@@ -27,6 +27,8 @@ async def command(ctx: SlashContext):
     pages = [embed1, embed2, embed3]
 
     await Paginator(bot=bot, ctx=ctx, pages=pages, content="Hello there")
+ 
+bot.run("token")
 ```
 
 ## Arguments
