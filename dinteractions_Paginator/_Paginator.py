@@ -97,7 +97,7 @@ async def Paginator(
         pageNum = pages.index(i) + 1
         try:
             title = i.title
-            title = (title[:18] + "...") if len(title) > 21
+            title = (title[:18] + "...") if len(title) > 21 else title
             select_options.append(create_select_option(f"{pageNum}: {title}", value=f"{pageNum}"))
         except Exception:
             select_options.append(create_select_option(f"{pageNum}: Title not found", value=f"{pageNum}"))
