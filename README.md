@@ -11,7 +11,7 @@ Unofficial discord-interactions multi-page embed handler
 ## Example GIF:
 <div align="left">
     Paginator with select:<br>
-    <img src="https://cdn.discordapp.com/attachments/871853650568417310/871864485034475580/8JtNVld7d0.gif" height="400">
+    <img src="https://cdn.discordapp.com/attachments/871853650568417310/871902648243216384/8B3ol6wW0q.gif" height="400">
 <div>
 
 ## Examples:
