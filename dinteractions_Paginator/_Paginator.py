@@ -96,9 +96,11 @@ async def Paginator(
     for i in pages:
         pageNum = pages.index(i) + 1
         try:
-            select_options.append(create_select_option(f"Go to page {pageNum}: {i.title if i.title != None else 'No title'}", value=f"{pageNum}"))
+            title = i.title
+            title = (title[:18] + "...") if len(title) > 21
+            select_options.append(create_select_option(f"{pageNum}: {title}", value=f"{pageNum}"))
         except Exception:
-            select_options.append(create_select_option(f"Go to page {pageNum}: No title", value=f"{pageNum}"))
+            select_options.append(create_select_option(f"{pageNum}: Title not found", value=f"{pageNum}"))
     select = create_select(
         options=select_options,
         placeholder=f"Page {index+1}/{top}",
