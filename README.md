@@ -2,7 +2,9 @@
 Unofficial discord-interactions multi-page embed handler
 
 ## Installation
-`pip install dinteractions-Paginator`
+```
+pip install dinteractions-Paginator
+```
 
 ### Dependencies
 - [discord.py](https://pypi.org/project/discord.py/)
@@ -72,8 +74,18 @@ NOTE: `slash = SlashCommand(bot)` required
 - `bot` - The bot variable, `commands.Bot()` is required
 - `ctx` - The context of a command; `SlashContext`
 - `pages` - `List[discord.Embed]`: A list of embeds to be paginated
+----------------------------------------
 ### Optional:
 - `content` - `Optional[str]`: the content of the message to send, defaults to `None`
+
+#### Time:
+- `timeout` - `Optional[int]`: if you want the paginator to work for a limited number of seconds, you can specify it here, defaults to `None` (meaning no timeout)
+- `disableAfterTimeout` - `Optional[bool]`: disable components after `timeout`, default `True`
+- `deleteAfterTimeout` - `Optional[bool]`: delete components after `timeout`, default `False`
+
+#### What to use:
+- `useSelect` - `Optional[bool]`: if you want the paginator to use a select, default is `True`
+- `useIndexButton` - `Optional[bool]`: if you want the paginator to use the index button, default is `False`
 
 #### Labels:
 - `firstLabel` - `Optional[str]`: The label of the button used to go to the first page, defaults to `""`
@@ -94,10 +106,11 @@ NOTE: `slash = SlashCommand(bot)` required
 - `nextStyle` - `Optional[Union[ButtonStyle, int]]`: the type of button (`ButtonStyle` or `int`) for the next button, defaults to `1` (`ButtonStyle.blue`)
 - `lastStyle` - `Optional[Union[ButtonStyle, int]]`: the type of button (`ButtonStyle` or `int`) for the last button, defaults to `1` (`ButtonStyle.blue`)
 
-#### What to use:
-- `useSelect` - `Optional[bool]`: if you want the paginator to use a select, default is `True`
-- `useIndexButton` - `Optional[bool]`: if you want the paginator to use the index button, default is `False`
-
 #### Miscellaneous:
-- `timeout` - `Optional[int]`: if you want the paginator to work for a limited number of seconds, you can specify it here, defaults to `None` (meaning no timeout)
 - `authorOnly` - `Optional[bool]`: if you want the paginator to work for the author only, default is `False`
+---------------------------------
+
+## Credits
+- Contributors of [discord-interactions](https://pypi.org/project/discord-py-slash-command/)
+    - [GitHub](https://github.com/discord-py-slash-commands/discord-py-interactions)
+    - [Discord server](https://discord.gg/KkgMBVuEkx)
