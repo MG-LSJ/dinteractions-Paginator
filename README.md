@@ -2,7 +2,9 @@
 Unofficial discord-interactions multi-page embed handler
 
 ## Installation
-`pip install dinteractions-Paginator`
+```
+pip install dinteractions-Paginator
+```
 
 ### Dependencies
 - [discord.py](https://pypi.org/project/discord.py/)
@@ -64,16 +66,27 @@ async def embeds(ctx):
  
 bot.run("token")
 ```
-NOTE: `slash = SlashCommand(bot)` required
+**NOTE: `slash = SlashCommand(bot)` required to override `bot`**
 
 ## Arguments
 
 ### Required:
-- `bot` - The bot variable, `commands.Bot()` is required
-- `ctx` - The context of a command; `SlashContext`
+- `bot` - `commands.Bot`: The bot variable, `commands.Bot` is required
+- `ctx` - `Union[Context, SlashContext]`: The context of a command
 - `pages` - `List[discord.Embed]`: A list of embeds to be paginated
+----------------------------------------
 ### Optional:
 - `content` - `Optional[str]`: the content of the message to send, defaults to `None`
+- `authorOnly` - `Optional[bool]`: if you want the paginator to work for the author only, default is `False`
+
+#### Time:
+- `timeout` - `Optional[int]`: if you want the paginator to work for a limited number of seconds, you can specify it here, defaults to `None` (meaning no timeout)
+- `disableAfterTimeout` - `Optional[bool]`: disable components after `timeout`, default `True`
+- `deleteAfterTimeout` - `Optional[bool]`: delete components after `timeout`, default `False`
+
+#### What to use:
+- `useSelect` - `Optional[bool]`: if you want the paginator to use a select, default is `True`
+- `useIndexButton` - `Optional[bool]`: if you want the paginator to use the index button, default is `False`
 
 #### Labels:
 - `firstLabel` - `Optional[str]`: The label of the button used to go to the first page, defaults to `""`
@@ -88,16 +101,14 @@ NOTE: `slash = SlashCommand(bot)` required
 - `lastEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict]`: emoji of the button used to go to the last page, defaults to `"⏭️"`
 
 #### Styles (the colo[u]r of the buttons):
-- `indexStyle` - `Optional[Union[ButtonStyle, int]]`: the type of button (`ButtonStyle` or `int`) for the index button, defaults to `3` (`ButtonStyle.green`)
-- `firstStyle` - `Optional[Union[ButtonStyle, int]]`: the type of button (`ButtonStyle` or `int`) for the first button, defaults to `1` (`ButtonStyle.blue`)
-- `prevStyle` - `Optional[Union[ButtonStyle, int]]`: the type of button (`ButtonStyle` or `int`) for the previous button, defaults to `1` (`ButtonStyle.blue`)
-- `nextStyle` - `Optional[Union[ButtonStyle, int]]`: the type of button (`ButtonStyle` or `int`) for the next button, defaults to `1` (`ButtonStyle.blue`)
-- `lastStyle` - `Optional[Union[ButtonStyle, int]]`: the type of button (`ButtonStyle` or `int`) for the last button, defaults to `1` (`ButtonStyle.blue`)
+- `indexStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the index button, defaults to `3` (`ButtonStyle.green`)
+- `firstStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the first button, defaults to `1` (`ButtonStyle.blue`)
+- `prevStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the previous button, defaults to `1` (`ButtonStyle.blue`)
+- `nextStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the next button, defaults to `1` (`ButtonStyle.blue`)
+- `lastStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the last button, defaults to `1` (`ButtonStyle.blue`)
+---------------------------------
 
-#### What to use:
-- `useSelect` - `Optional[bool]`: if you want the paginator to use a select, default is `True`
-- `useIndexButton` - `Optional[bool]`: if you want the paginator to use the index button, default is `False`
-
-#### Miscellaneous:
-- `timeout` - `Optional[int]`: if you want the paginator to work for a limited number of seconds, you can specify it here, defaults to `None` (meaning no timeout)
-- `authorOnly` - `Optional[bool]`: if you want the paginator to work for the author only, default is `False`
+## Credits
+- Contributors of [discord-interactions](https://pypi.org/project/discord-py-slash-command/)
+    - [GitHub](https://github.com/discord-py-slash-commands/discord-py-interactions)
+    - [Discord server](https://discord.gg/KkgMBVuEkx)

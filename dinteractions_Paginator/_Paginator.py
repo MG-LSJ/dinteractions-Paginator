@@ -16,12 +16,17 @@ from discord_slash.utils.manage_components import (
     create_select_option
 )
 
-
 async def Paginator(
     bot: commands.Bot,
     ctx: SlashContext,
     pages: List[discord.Embed],
     content: Optional[str] = None,
+    authorOnly: Optional[bool] = False,
+    timeout: Optional[int] = None,
+    disableAfterTimeout: Optional[bool] = True,
+    deleteAfterTimeout: Optional[bool] = False,
+    useSelect: Optional[bool] = True,
+    useIndexButton: Optional[bool] = False,
     firstLabel: str = "",
     prevLabel: str = "",
     nextLabel: str = "",
@@ -43,11 +48,31 @@ async def Paginator(
     prevStyle: Optional[Union[ButtonStyle, int]] = 1,
     nextStyle: Optional[Union[ButtonStyle, int]] = 1,
     lastStyle: Optional[Union[ButtonStyle, int]] = 1,
-    timeout: Optional[int] = None,
-    authorOnly: Optional[bool] = False,
-    useSelect: Optional[bool] = True,
-    useIndexButton: Optional[bool] = False
 ):
+    """
+    :param bot: the bot/client variable with discord_slash.SlashCommand override
+    :param ctx: command context
+    :param content: the content of message to send
+    :param authorOnly: paginator to work author only
+    :param timeout: set paginator to work for limited time
+    :param disableAfterTimeout: disables components after timeout
+    :param deleteAfterTimeout: deletes components after timeout
+    :param useSelect: uses select
+    :param useIndexButton: uses index button
+    :param firstLabel: label of first page button
+    :param prevLabel: label of previous page button
+    :param nextLabel: label of next page button
+    :param lastLabel: label of last page button
+    :param firstEmoji: emoji of first page button
+    :param prevEmoji: emoji of previous page button
+    :param nextEmoji: emoji of next page button
+    :param lastEmoji: emoji of last page button
+    :param indexStyle: colo[u]r of index button
+    :param firstStyle: colo[u]r of first button
+    :param prevStyle: colo[u]r of previous button
+    :param nextStyle: colo[u]r of next button
+    :param lastStyle: colo[u]r of last button
+    """
     top = len(pages)  # limit of the paginator
     bid = random.randint(10000, 99999)  # base of button id
     index = 0  # starting page
@@ -112,7 +137,7 @@ async def Paginator(
     selectControls = create_actionrow(select)
     buttonControls = create_actionrow(*controlButtons)
     components = [selectControls, buttonControls] if useSelect == True else [buttonControls]
-    await ctx.send(content=content, embed=pages[0], components=components)
+    msg = await ctx.send(content=content, embed=pages[0], components=components)
     # handling the interaction
     tmt = True  # stop listening when timeout expires
     while tmt:
@@ -123,9 +148,21 @@ async def Paginator(
             await button_context.defer(edit_origin=True)
         except TimeoutError:
             tmt = False
-            await ctx.origin_message.edit(
-                content=content, embed=pages[index], components=None
-            )
+            if disableAfterTimeout == True:
+                selectControls["components"][0][
+                    "disabled"
+                ] = True
+                for i in range(5 if useIndexButton == True else 4):
+                    buttonControls["components"][i][
+                        "disabled"
+                    ] = True
+                await msg.edit(
+                    components=components
+                )
+            if deleteAfterTimeout == True:
+                await msg.edit(
+                    components=None
+                )
 
         else:
             # Handling first button
