@@ -85,8 +85,9 @@ bot.run("token")
 - `deleteAfterTimeout` - `Optional[bool]`: delete components after `timeout`, default `False`
 
 #### What to use:
-- `useSelect` - `Optional[bool]`: if you want the paginator to use a select, default is `True`
-- `useIndexButton` - `Optional[bool]`: if you want the paginator to use the index button, default is `False`
+- `useButtons` - `Optional[bool]`: uses buttons, default is `True`
+- `useSelect` - `Optional[bool]`: uses a select, default is `True`
+- `useIndexButton` - `Optional[bool]`: uses the index button, default is `False` and stays `False` if `useButtons` is also `False`
 
 #### Labels:
 - `firstLabel` - `Optional[str]`: The label of the button used to go to the first page, defaults to `""`
