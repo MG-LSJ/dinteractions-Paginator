@@ -148,7 +148,11 @@ async def Paginator(
             await button_context.defer(edit_origin=True)
         except TimeoutError:
             tmt = False
-            if disableAfterTimeout == True:
+            if deleteAfterTimeout == True:
+                await msg.edit(
+                    components=None
+                )
+            elif disableAfterTimeout == True:
                 selectControls["components"][0][
                     "disabled"
                 ] = True
@@ -159,11 +163,6 @@ async def Paginator(
                 await msg.edit(
                     components=components
                 )
-            if deleteAfterTimeout == True:
-                await msg.edit(
-                    components=None
-                )
-
         else:
             # Handling first button
             if button_context.component_id == f"{bid}-first" and index > 0:
