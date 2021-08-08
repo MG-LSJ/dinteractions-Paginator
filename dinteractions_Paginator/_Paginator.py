@@ -16,13 +16,14 @@ from discord_slash.utils.manage_components import (
     create_select_option
 )
 
-from errors import (
+from .errors import (
     BadContent,
     BadButtons,
     NoTitle,
     IncorrectDataType,
     BadEmoji
 )
+
 
 async def Paginator(
     bot: commands.Bot,
