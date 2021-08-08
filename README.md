@@ -13,11 +13,11 @@ pip install dinteractions-Paginator
 ## Example GIF:
 <div align="left">
     Paginator with select:<br>
-    <img src="https://cdn.discordapp.com/attachments/871853650568417310/871902648243216384/8B3ol6wW0q.gif" height="400">
+    <img src="https://cdn.discordapp.com/attachments/871853650568417310/873731782514728980/o8YSi1nzvT.gif" height="400">
 <div>
 
 ## Examples:
-These simple examples show how to easily create interactive, multiple page embeds that annyone can interact with.
+These simple examples show how to easily create interactive, multiple page embeds that annyone can interact with that automatically deactivate after 60 seconds of inactivity:
 
 ### Slash command:
 ```py
@@ -38,7 +38,7 @@ async def embeds(ctx: SlashContext):
     five = discord.Embed(title="5th Embed", description="General Kenobi!", color=discord.Color.blue())
     pages = [one, two, three, four, five]
 
-    await Paginator(bot=bot, ctx=ctx, pages=pages, content="Hello there")
+    await Paginator(bot=bot, ctx=ctx, pages=pages, content=["1", "2", "3", "4", "5"], timeout=60)
  
 bot.run("token")
 ```
@@ -62,7 +62,7 @@ async def embeds(ctx):
     five = discord.Embed(title="5th Embed", description="General Kenobi!", color=discord.Color.blue())
     pages = [one, two, three, four, five]
 
-    await Paginator(bot=bot, ctx=ctx, pages=pages, content="Hello there")
+    await Paginator(bot=bot, ctx=ctx, pages=pages, content=["1", "2", "3", "4", "5"], timeout=60)
  
 bot.run("token")
 ```
@@ -76,11 +76,11 @@ bot.run("token")
 - `pages` - `List[discord.Embed]`: A list of embeds to be paginated
 ----------------------------------------
 ### Optional:
-- `content` - `Optional[str]`: the content of the message to send, defaults to `None`
+- `content` - `Optional[Union[str, List[str]]]`: the content of the message to send, defaults to `None`
 - `authorOnly` - `Optional[bool]`: if you want the paginator to work for the author only, default is `False`
 
 #### Time:
-- `timeout` - `Optional[int]`: if you want the paginator to work for a limited number of seconds, you can specify it here, defaults to `None` (meaning no timeout)
+- `timeout` - `Optional[int]`: deactivates paginator after inactivity if enabled, defaults to `None` (meaning no timeout)
 - `disableAfterTimeout` - `Optional[bool]`: disable components after `timeout`, default `True`
 - `deleteAfterTimeout` - `Optional[bool]`: delete components after `timeout`, default `False`
 
