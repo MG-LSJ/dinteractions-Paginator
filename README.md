@@ -1,6 +1,14 @@
 # dinteractions-Paginator
 Unofficial discord-interactions multi-page embed handler
 
+![Discord](https://img.shields.io/discord/859508565101248582?color=blue&label=discord&style=for-the-badge) ![PyPI - Downloads](https://img.shields.io/pypi/dm/dinteractions-Paginator?color=blue&style=for-the-badge)
+## Features
+- Message per embed or persistent message
+- Index select that can be turned on/off
+- Select labels are generated based on embed's title
+- Index button that can be turned on/off
+- Ability to set the buttons to any emote, color or label
+
 ## Installation
 ```
 pip install dinteractions-Paginator
