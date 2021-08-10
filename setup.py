@@ -4,7 +4,7 @@ with open("README.md","r",encoding="utf-8") as fh:
 
 setup(
     name="dinteractions_Paginator",
-    version="1.1.7",
+    version="1.1.8",
     description="Unofficial discord-interactions multi page embed handler",
     long_description=long_description,
     long_description_content_type="text/markdown",

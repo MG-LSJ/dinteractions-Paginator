@@ -208,17 +208,17 @@ async def Paginator(
         min_values=1,
         max_values=1,
     )
-    if useIndexButton == True and useButtons == False:
+    if useIndexButton and not useButtons:
         BadButtons("Index button cannot be used with useButtons=False!")
-    useIndexButton = False if useButtons == False else useIndexButton
-    if useIndexButton == False:
+    useIndexButton = False if not useButtons else useIndexButton
+    if not useIndexButton:
         controlButtons.pop(2)
     selectControls = create_actionrow(select)
     buttonControls = create_actionrow(*controlButtons)
     components = []
-    if useSelect == True:
+    if useSelect:
         components.append(selectControls)
-    if useButtons == True:
+    if useButtons:
         components.append(buttonControls)
     msg = await ctx.send(content=content[0] if multiContent else content, embed=pages[0], components=components)
     # handling the interaction
@@ -231,15 +231,15 @@ async def Paginator(
             await button_context.defer(edit_origin=True)
         except TimeoutError:
             tmt = False
-            if deleteAfterTimeout == True:
+            if deleteAfterTimeout:
                 await msg.edit(
                     components=None
                 )
-            elif disableAfterTimeout == True:
+            elif disableAfterTimeout:
                 selectControls["components"][0][
                     "disabled"
                 ] = True
-                for i in range(5 if useIndexButton == True else 4):
+                for i in range(5 if useIndexButton else 4):
                     buttonControls["components"][i][
                         "disabled"
                     ] = True
@@ -256,13 +256,13 @@ async def Paginator(
                 buttonControls["components"][1][
                     "disabled"
                 ] = True  # Disables the previous button
-                buttonControls["components"][3 if useIndexButton == True else 2]["disabled"] = False  # Enables Next Button
-                buttonControls["components"][4 if useIndexButton == True else 3]["disabled"] = False  # Enables Last Button
-                if useIndexButton == True:
+                buttonControls["components"][3 if useIndexButton else 2]["disabled"] = False  # Enables Next Button
+                buttonControls["components"][4 if useIndexButton else 3]["disabled"] = False  # Enables Last Button
+                if useIndexButton:
                     buttonControls["components"][2][
                         "label"
                     ] = f"Page {index+1}/{top}"  # updates the index
-                if useSelect == True:
+                if useSelect:
                     selectControls["components"][0][
                         "placeholder"
                     ] = f"Page {index+1}/{top}"
@@ -279,13 +279,13 @@ async def Paginator(
                     buttonControls["components"][1][
                         "disabled"
                     ] = True  # Disables the previous button
-                buttonControls["components"][3 if useIndexButton == True else 2]["disabled"] = False  # Enables Next Button
-                buttonControls["components"][4 if useIndexButton == True else 3]["disabled"] = False  # Enables Last Button
-                if useIndexButton == True:
+                buttonControls["components"][3 if useIndexButton else 2]["disabled"] = False  # Enables Next Button
+                buttonControls["components"][4 if useIndexButton else 3]["disabled"] = False  # Enables Last Button
+                if useIndexButton:
                     buttonControls["components"][2][
                         "label"
                     ] = f"Page {index+1}/{top}"  # updates the index
-                if useSelect == True:
+                if useSelect:
                     selectControls["components"][0][
                         "placeholder"
                     ] = f"Page {index+1}/{top}"
@@ -296,19 +296,19 @@ async def Paginator(
             if button_context.component_id == f"{bid}-next" and index < top - 1:
                 index = index + 1  # add 1 to the index
                 if index == top - 1:
-                    buttonControls["components"][3 if useIndexButton == True else 2][
+                    buttonControls["components"][3 if useIndexButton else 2][
                         "disabled"
                     ] = True  # disables the next button
-                    buttonControls["components"][4 if useIndexButton == True else 3][
+                    buttonControls["components"][4 if useIndexButton else 3][
                         "disabled"
                     ] = True  # disables the last button
                 buttonControls["components"][0]["disabled"] = False  # enables first button
                 buttonControls["components"][1]["disabled"] = False  # enables previous button
-                if useIndexButton == True:
+                if useIndexButton:
                     buttonControls["components"][2][
                         "label"
                     ] = f"Page {index+1}/{top}"  # updates the index
-                if useSelect == True:
+                if useSelect:
                     selectControls["components"][0][
                         "placeholder"
                     ] = f"Page {index+1}/{top}"
@@ -318,19 +318,19 @@ async def Paginator(
             # handling last button
             if button_context.component_id == f"{bid}-last" and index < top - 1:
                 index = top - 1  # set index to last
-                buttonControls["components"][3 if useIndexButton == True else 2][
+                buttonControls["components"][3 if useIndexButton else 2][
                     "disabled"
                 ] = True  # disables the next button
-                buttonControls["components"][4 if useIndexButton == True else 3][
+                buttonControls["components"][4 if useIndexButton else 3][
                     "disabled"
                 ] = True  # disables the last button
                 buttonControls["components"][0]["disabled"] = False  # enables first button
                 buttonControls["components"][1]["disabled"] = False  # enables previous button
-                if useIndexButton == True:
+                if useIndexButton:
                     buttonControls["components"][2][
                         "label"
                     ] = f"Page {index+1}/{top}"  # updates the index
-                if useSelect == True:
+                if useSelect:
                     selectControls["components"][0][
                         "placeholder"
                     ] = f"Page {index+1}/{top}"
@@ -340,7 +340,7 @@ async def Paginator(
             # handling select
             if button_context.component_type == 3:
                 index = int(button_context.selected_options[0]) - 1
-                if useButtons == True:
+                if useButtons:
                     if index == 0:
                         buttonControls["components"][0][
                             "disabled"
@@ -348,31 +348,31 @@ async def Paginator(
                         buttonControls["components"][1][
                             "disabled"
                         ] = True  # Disables the previous button
-                        buttonControls["components"][3 if useIndexButton == True else 2]["disabled"] = False  # Enables Next Button
-                        buttonControls["components"][4 if useIndexButton == True else 3]["disabled"] = False  # Enables Last Button
+                        buttonControls["components"][3 if useIndexButton else 2]["disabled"] = False  # Enables Next Button
+                        buttonControls["components"][4 if useIndexButton else 3]["disabled"] = False  # Enables Last Button
                     elif index == top - 1:
-                        buttonControls["components"][3 if useIndexButton == True else 2][
+                        buttonControls["components"][3 if useIndexButton else 2][
                             "disabled"
                         ] = True  # disables the next button
-                        buttonControls["components"][4 if useIndexButton == True else 3][
+                        buttonControls["components"][4 if useIndexButton else 3][
                             "disabled"
                         ] = True  # disables the last button
                         buttonControls["components"][0]["disabled"] = False  # enables first button
                         buttonControls["components"][1]["disabled"] = False  # enables previous button
                     else:
-                        buttonControls["components"][3 if useIndexButton == True else 2][
+                        buttonControls["components"][3 if useIndexButton else 2][
                             "disabled"
                         ] = False # enables the next button
-                        buttonControls["components"][4 if useIndexButton == True else 3][
+                        buttonControls["components"][4 if useIndexButton else 3][
                             "disabled"
                         ] = False # enables the last button
                         buttonControls["components"][0]["disabled"] = False # enables first button
                         buttonControls["components"][1]["disabled"] = False # enables previous button
-                    if useIndexButton == True:
+                    if useIndexButton:
                         buttonControls["components"][2][
                             "label"
                         ] = f"Page {index+1}/{top}"  # updates the index
-                if useSelect == True:
+                if useSelect:
                     selectControls["components"][0][
                         "placeholder"
                     ] = f"Page {index+1}/{top}"
