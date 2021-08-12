@@ -211,10 +211,10 @@ async def Paginator(
     components = []
     if useSelect:
         select = create_select(
-        options=select_options,
-        placeholder=f"Page {index+1}/{top}",
-        min_values=1,
-        max_values=1,
+            options=select_options,
+            placeholder=f"Page {index+1}/{top}",
+            min_values=1,
+            max_values=1,
         )
         selectControls = create_actionrow(select)
         components.append(selectControls)
