@@ -202,21 +202,21 @@ async def Paginator(
         except Exception:
             select_options.append(create_select_option(f"{pageNum}: Title not found", value=f"{pageNum}"))
             NoTitle(pageNum)
-    select = create_select(
-        options=select_options,
-        placeholder=f"Page {index+1}/{top}",
-        min_values=1,
-        max_values=1,
-    )
     if useIndexButton and not useButtons:
         BadButtons("Index button cannot be used with useButtons=False!")
     useIndexButton = False if not useButtons else useIndexButton
     if not useIndexButton:
         controlButtons.pop(2)
-    selectControls = create_actionrow(select)
     buttonControls = create_actionrow(*controlButtons)
     components = []
     if useSelect:
+        select = create_select(
+            options=select_options,
+            placeholder=f"Page {index+1}/{top}",
+            min_values=1,
+            max_values=1,
+        )
+        selectControls = create_actionrow(select)
         components.append(selectControls)
     if useButtons:
         components.append(buttonControls)
@@ -236,9 +236,10 @@ async def Paginator(
                     components=None
                 )
             elif disableAfterTimeout:
-                selectControls["components"][0][
-                    "disabled"
-                ] = True
+                if useSelect:
+                    selectControls["components"][0][
+                        "disabled"
+                    ] = True
                 for i in range(5 if useIndexButton else 4):
                     buttonControls["components"][i][
                         "disabled"
