@@ -19,9 +19,10 @@ from discord_slash.utils.manage_components import (
 from .errors import (
     BadContent,
     BadButtons,
-    NoTitle,
     IncorrectDataType,
-    BadEmoji
+    BadEmoji,
+    BadOnly,
+    TooManyButtons
 )
 
 
@@ -31,6 +32,13 @@ async def Paginator(
     pages: List[discord.Embed],
     content: Optional[Union[str, List[str]]] = None,
     authorOnly: Optional[bool] = False,
+    onlyFor: Optional[
+            Union[
+                discord.User,
+                discord.Role,
+                List[Union[discord.User, discord.Role]],
+            ]
+        ] = None,
     timeout: Optional[int] = None,
     disableAfterTimeout: Optional[bool] = True,
     deleteAfterTimeout: Optional[bool] = False,
@@ -44,6 +52,7 @@ async def Paginator(
     lastLabel: Optional[str] = "",
     linkLabel: Optional[Union[str, List[str]]] = "",
     linkURL: Optional[Union[str, List[str]]] = "",
+    customButtonLabel: Optional[str] = None,
     firstEmoji: Optional[
         Union[discord.Emoji, discord.PartialEmoji, dict, bytes]
     ] = "⏮️",
@@ -56,17 +65,22 @@ async def Paginator(
     lastEmoji: Optional[
         Union[discord.Emoji, discord.PartialEmoji, dict, bytes]
     ] = "⏭️",
+    customButtonEmoji: Optional[
+        Union[discord.Emoji, discord.PartialEmoji, dict, bytes]
+    ] = None,
     indexStyle: Optional[Union[ButtonStyle, int]] = 3,
     firstStyle: Optional[Union[ButtonStyle, int]] = 1,
     prevStyle: Optional[Union[ButtonStyle, int]] = 1,
     nextStyle: Optional[Union[ButtonStyle, int]] = 1,
     lastStyle: Optional[Union[ButtonStyle, int]] = 1,
+    customButtonStyle: Optional[Union[ButtonStyle, int]] = 2,
 ):
     """
     :param bot: the bot/client variable with discord_slash.SlashCommand override
     :param ctx: command context
     :param content: the content of message to send
     :param authorOnly: paginator to work author only
+    :param onlyFor: paginator to work for specified user(s)
     :param timeout: set paginator to work for limited time
     :param disableAfterTimeout: disables components after timeout
     :param deleteAfterTimeout: deletes components after timeout
@@ -80,20 +94,24 @@ async def Paginator(
     :param lastLabel: label of last page button
     :param linkLabel: label of link button
     :param linkURL: URL of link button
+    :param customButtonLabel: label of custom button
     :param firstEmoji: emoji of first page button
     :param prevEmoji: emoji of previous page button
     :param nextEmoji: emoji of next page button
     :param lastEmoji: emoji of last page button
+    :param customButtonEmoji: emoji of custom button
     :param indexStyle: colo[u]r of index button
     :param firstStyle: colo[u]r of first button
     :param prevStyle: colo[u]r of previous button
     :param nextStyle: colo[u]r of next button
     :param lastStyle: colo[u]r of last button
+    :param customButtonStyle: colo[u]r of custom button
     """
     top = len(pages)  # limit of the paginator
     multiContent = False
     multiLabel = False
     multiURL = False
+    useCustomButton= False
 
     if not isinstance(bot, commands.Bot):
         raise IncorrectDataType("bot", "commands.Bot", bot)
@@ -115,6 +133,11 @@ async def Paginator(
             raise BadContent(content)
     if not isinstance(authorOnly, bool):
         raise IncorrectDataType("authorOnly", "bool", authorOnly)
+    if not isinstance(onlyFor, discord.User):
+        if not isinstance(onlyFor, discord.Role):
+            if not isinstance(onlyFor, list):
+                if onlyFor != None:
+                    raise IncorrectDataType("onlyFor", "discord.User, discord.Role, or list of discord.User/discord.Role", onlyFor)
     if not isinstance(timeout, int):
         if timeout != None:
             raise IncorrectDataType("timeout", "int", timeout)
@@ -122,10 +145,10 @@ async def Paginator(
         raise IncorrectDataType("disableAfterTimeout", "bool", disableAfterTimeout)
     if not isinstance(deleteAfterTimeout, bool):
         raise IncorrectDataType("deleteAfterTimeout", "bool", deleteAfterTimeout)
+    if not isinstance(useSelect, bool):
+        raise IncorrectDataType("useSelect", "bool", useSelect)
     if not isinstance(useButtons, bool):
         raise IncorrectDataType("useButtons", "bool", useButtons)
-    if not isinstance(authorOnly, bool):
-        raise IncorrectDataType("useSelect", "bool", useSelect)
     if not isinstance(useIndexButton, bool):
         raise IncorrectDataType("useIndexButton", "bool", useIndexButton)
     if not isinstance(useLinkButton, bool):
@@ -165,6 +188,9 @@ async def Paginator(
             multiURL = True
     elif not isinstance(linkURL, str):
         raise IncorrectDataType("linkURL", "str or list of str", linkURL)
+    if not isinstance(customButtonLabel, str):
+        if customButtonLabel != None:
+            raise IncorrectDataType("customButtonLabel", "str", customButtonLabel)
     emojis = [firstEmoji, prevEmoji, nextEmoji, lastEmoji]
     for emoji in emojis:
         num = emojis.index(emoji) + 1
@@ -173,18 +199,26 @@ async def Paginator(
     if not isinstance(indexStyle, ButtonStyle) and not isinstance(indexStyle, int):
         raise IncorrectDataType("indexStyle", "ButtonStyle or int", indexStyle)
     if not isinstance(firstStyle, ButtonStyle) and not isinstance(firstStyle, int):
-        raise IncorrectDataType("firstLabel", "ButtonStyle or int", firstStyle)
+        raise IncorrectDataType("firstStyle", "ButtonStyle or int", firstStyle)
     if not isinstance(prevStyle, ButtonStyle) and not isinstance(prevStyle, int):
-        raise IncorrectDataType("prevLabel", "ButtonStyle or int", prevStyle)
+        raise IncorrectDataType("prevStyle", "ButtonStyle or int", prevStyle)
     if not isinstance(nextStyle, ButtonStyle) and not isinstance(nextStyle, int):
-        raise IncorrectDataType("nextLabel", "ButtonStyle or int", nextStyle)
+        raise IncorrectDataType("nextStyle", "ButtonStyle or int", nextStyle)
     if not isinstance(lastStyle, ButtonStyle) and not isinstance(lastStyle, int):
-        raise IncorrectDataType("lastLabel", "ButtonStyle or int", lastStyle)
+        raise IncorrectDataType("lastStyle", "ButtonStyle or int", lastStyle)
+    if not isinstance(customButtonStyle, ButtonStyle) and not isinstance(customButtonStyle, int):
+        raise IncorrectDataType("customButtonStyle", "ButtonStyle or int", customButtonStyle)
     
     if useIndexButton and useLinkButton:
         BadButtons("Can not use index and link button at the same time!")
         useLinkButton = False
-        
+
+    if authorOnly and onlyFor:
+        BadOnly()
+        authorOnly = False
+    
+    if customButtonLabel != None:
+        useCustomButton= True
     
     bid = random.randint(10000, 99999)  # base of button id
     index = 0  # starting page
@@ -236,13 +270,11 @@ async def Paginator(
             title = i.title
             if title == discord.Embed.Empty:
                 select_options.append(create_select_option(f"{pageNum}: Title not found", value=f"{pageNum}"))
-                NoTitle(pageNum)
             else:
                 title = (title[:93] + "...") if len(title) > 96 else title
                 select_options.append(create_select_option(f"{pageNum}: {title}", value=f"{pageNum}"))
         except Exception:
             select_options.append(create_select_option(f"{pageNum}: Title not found", value=f"{pageNum}"))
-            NoTitle(pageNum)
     if useIndexButton and not useButtons:
         BadButtons("Index button cannot be used with useButtons=False!")
     useIndexButton = False if not useButtons else useIndexButton
@@ -254,7 +286,21 @@ async def Paginator(
             label=linkLabel[0] if multiLabel else linkLabel,
             url=linkURL[0] if multiURL else linkURL
         )
-        controlButtons.append(linkButton)
+        if len(controlButtons) < 5:
+            controlButtons.append(linkButton)
+        else:
+            raise TooManyButtons()
+    if useCustomButton:
+        customButton = create_button(
+            style=customButtonStyle,
+            label=customButtonLabel,
+            disabled=True,
+            emoji=customButtonEmoji
+        )
+        if len(controlButtons) < 5:
+            controlButtons.append(customButton)
+        else:
+            raise TooManyButtons()
     buttonControls = create_actionrow(*controlButtons)
     components = []
     if useSelect:
@@ -276,7 +322,6 @@ async def Paginator(
             button_context: ComponentContext = await wait_for_component(
                 bot, components=components, timeout=timeout
             )
-            await button_context.defer(edit_origin=True)
         except TimeoutError:
             tmt = False
             if deleteAfterTimeout:
@@ -296,6 +341,30 @@ async def Paginator(
                     components=components
                 )
         else:
+            if authorOnly:
+                if button_context.author.id != ctx.author.id:
+                    await button_context.defer(ignore=True)
+                    continue
+            if onlyFor != None:
+                check = False
+                if isinstance(onlyFor, list):
+                    for user in filter(
+                        lambda x: isinstance(x, discord.abc.User), onlyFor
+                    ):
+                        check = check or user.id == button_context.author.id
+                    for role in filter(
+                        lambda x: isinstance(x, discord.role.Role), onlyFor
+                    ):
+                        check = check or role in button_context.author.roles
+                else:
+                    if isinstance(onlyFor, discord.abc.User):
+                        check = check or onlyFor.id == button_context.author.id
+                    elif isinstance(onlyFor, discord.role.Role):
+                        check = check or onlyFor in button_context.author.roles
+                if not check:
+                    await button_context.defer(ignore=True)
+                    continue
+            await button_context.defer(edit_origin=True)
             # Handling first button
             if button_context.component_id == f"{bid}-first" and index > 0:
                 index = 0  # first page

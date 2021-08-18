@@ -23,6 +23,10 @@ class BadEmoji(PaginatorError):
             name = "lastEmoji"
         super().__init__(f"{name} needs to be an emoji!")
 
+class TooManyButtons(PaginatorError):
+    def __init__(self):
+        super().__init__("Too many buttons! Please remove some!")
+
 class PaginatorWarning(Warning):
     """Base class for warnings"""
 
@@ -31,7 +35,7 @@ class BadButtons(PaginatorWarning):
         self.logger = logging.getLogger("dinteractions_Paginator")
         self.logger.warning(msg)
 
-class NoTitle(PaginatorWarning):
-    def __init__(self, i):
+class BadOnly(PaginatorWarning):
+    def __init__(self):
         self.logger = logging.getLogger("dinteractions_Paginator")
-        self.logger.warning(f"No title found for embed number {i}!")
+        self.logger.warning("authorOnly and onlyFor can not both be defined! Using onlyFor instead.")
