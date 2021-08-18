@@ -294,7 +294,8 @@ async def Paginator(
         customButton = create_button(
             style=customButtonStyle,
             label=customButtonLabel,
-            disabled=True
+            disabled=True,
+            emoji=customButtonEmoji
         )
         if len(controlButtons) < 5:
             controlButtons.append(customButton)
