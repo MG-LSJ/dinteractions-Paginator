@@ -86,6 +86,7 @@ bot.run("token")
 ### Optional:
 - `content` - `Optional[Union[str, List[str]]]`: the content of the message to send, defaults to `None`
 - `authorOnly` - `Optional[bool]`: if you want the paginator to work for the author only, default is `False`
+- `onlyFor` - `Optional[Union[discord.User, discord.Role, List[Union[discord.User, discord.Role]]]]`: components only for specified user(s) or role(s)
 
 #### Time:
 - `timeout` - `Optional[int]`: deactivates paginator after inactivity if enabled, defaults to `None` (meaning no timeout)
@@ -105,12 +106,14 @@ bot.run("token")
 - `lastLabel` - `Optional[str]`: The label of the button used to go to the last page, defaults to `""`
 - `linkLabel` - `Optional[Union[str, List[str]]]`: The label for the link button
 - `linkURL` - `Optional[Union[str, List[str]]]`: The URL(s) for the link button
+- `customButtonLabel` = `Optional[str]`: The label of a custom disabled button, default `None`
 
 #### Emojis:
-- `firstEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict]`: emoji of the button used to go to the first page, defaults to `"⏮️"`
-- `prevEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict]`: emoji of the button used to go to the previous page, defaults to `"◀"`
-- `nextEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict]`: emoji of the button used to go to the next page, defaults to `"▶"`
-- `lastEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict]`: emoji of the button used to go to the last page, defaults to `"⏭️"`
+- `firstEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, bytes]`: emoji of the button used to go to the first page, defaults to `"⏮️"`
+- `prevEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, bytes]`: emoji of the button used to go to the previous page, defaults to `"◀"`
+- `nextEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, bytes]`: emoji of the button used to go to the next page, defaults to `"▶"`
+- `lastEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, bytes]`: emoji of the button used to go to the last page, defaults to `"⏭️"`
+- `lastEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, bytes]`: emoji of the custom disabled button, defaults to `None`
 
 #### Styles (the colo[u]r of the buttons):
 - `indexStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the index button, defaults to `3` (`ButtonStyle.green`)
@@ -118,6 +121,7 @@ bot.run("token")
 - `prevStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the previous button, defaults to `1` (`ButtonStyle.blue`)
 - `nextStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the next button, defaults to `1` (`ButtonStyle.blue`)
 - `lastStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the last button, defaults to `1` (`ButtonStyle.blue`)
+- `customButtonStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the last button, defaults to `2` (`ButtonStyle.gray`)
 ---------------------------------
 
 ## Credits
