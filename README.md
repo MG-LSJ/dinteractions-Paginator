@@ -96,12 +96,15 @@ bot.run("token")
 - `useButtons` - `Optional[bool]`: uses buttons, default is `True`
 - `useSelect` - `Optional[bool]`: uses a select, default is `True`
 - `useIndexButton` - `Optional[bool]`: uses the index button, default is `False` and stays `False` if `useButtons` is also `False`
+- `useLinkButton` - `Optional[bool]`: uses the link button
 
 #### Labels:
 - `firstLabel` - `Optional[str]`: The label of the button used to go to the first page, defaults to `""`
 - `prevLabel` - `Optional[str]`: The label of the button used to go to the previous page, defaults to `""`
 - `nextLabel` - `Optional[str]`: The label of the button used to go to the next page, defaults to `""`
 - `lastLabel` - `Optional[str]`: The label of the button used to go to the last page, defaults to `""`
+- `linkLabel` - `Optional[Union[str, List[str]]]`: The label for the link button
+- `linkURL` - `Optional[Union[str, List[str]]]`: The URL(s) for the link button
 
 #### Emojis:
 - `firstEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict]`: emoji of the button used to go to the first page, defaults to `"⏮️"`

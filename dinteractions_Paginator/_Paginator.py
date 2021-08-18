@@ -37,10 +37,13 @@ async def Paginator(
     useSelect: Optional[bool] = True,
     useButtons: Optional[bool] = True,
     useIndexButton: Optional[bool] = False,
-    firstLabel: str = "",
-    prevLabel: str = "",
-    nextLabel: str = "",
-    lastLabel: str = "",
+    useLinkButton: Optional[bool] = False,
+    firstLabel: Optional[str] = "",
+    prevLabel: Optional[str] = "",
+    nextLabel: Optional[str] = "",
+    lastLabel: Optional[str] = "",
+    linkLabel: Optional[Union[str, List[str]]] = "",
+    linkURL: Optional[Union[str, List[str]]] = "",
     firstEmoji: Optional[
         Union[discord.Emoji, discord.PartialEmoji, dict, bytes]
     ] = "⏮️",
@@ -70,10 +73,13 @@ async def Paginator(
     :param useSelect: uses select
     :param useButtons: uses buttons
     :param useIndexButton: uses index button
+    :param useLinkButton: uses link button
     :param firstLabel: label of first page button
     :param prevLabel: label of previous page button
     :param nextLabel: label of next page button
     :param lastLabel: label of last page button
+    :param linkLabel: label of link button
+    :param linkURL: URL of link button
     :param firstEmoji: emoji of first page button
     :param prevEmoji: emoji of previous page button
     :param nextEmoji: emoji of next page button
@@ -86,6 +92,8 @@ async def Paginator(
     """
     top = len(pages)  # limit of the paginator
     multiContent = False
+    multiLabel = False
+    multiURL = False
 
     if not isinstance(bot, commands.Bot):
         raise IncorrectDataType("bot", "commands.Bot", bot)
@@ -120,14 +128,43 @@ async def Paginator(
         raise IncorrectDataType("useSelect", "bool", useSelect)
     if not isinstance(useIndexButton, bool):
         raise IncorrectDataType("useIndexButton", "bool", useIndexButton)
+    if not isinstance(useLinkButton, bool):
+        raise IncorrectDataType("useLinkButton", "bool", useLinkButton)
     if not isinstance(firstLabel, str):
         raise IncorrectDataType("firstLabel", "str", firstLabel)
     if not isinstance(prevLabel, str):
-        raise IncorrectDataType("prevLabel", "str", firstLabel)
+        raise IncorrectDataType("prevLabel", "str", prevLabel)
     if not isinstance(nextLabel, str):
-        raise IncorrectDataType("nextLabel", "str", firstLabel)
+        raise IncorrectDataType("nextLabel", "str", nextLabel)
     if not isinstance(lastLabel, str):
-        raise IncorrectDataType("lastLabel", "str", firstLabel)
+        raise IncorrectDataType("lastLabel", "str", lastLabel)
+    
+    if isinstance(linkLabel, list):
+        if len(linkLabel) < top:
+            linkLabel = linkLabel[0]
+            if not isinstance(linkLabel, str):
+                raise IncorrectDataType("linkLabel", "str or list of str", linkLabel)
+        else:
+            linkLabel = linkLabel[:top]
+            for s in linkLabel:
+                if not isinstance(s, str):
+                    raise IncorrectDataType("linkLabel", "str or list of str", linkLabel)
+            multiLabel = True
+    elif not isinstance(linkLabel, str):
+        raise IncorrectDataType("linkLabel", "str or list of str", linkLabel)
+    if isinstance(linkURL, list):
+        if len(linkURL) < top:
+            linkURL = linkURL[0]
+            if not isinstance(linkURL, str):
+                raise IncorrectDataType("linkURL", "str or list of str", linkURL)
+        else:
+            linkURL = linkURL[:top]
+            for s in linkURL:
+                if not isinstance(s, str):
+                    raise IncorrectDataType("linkURL", "str or list of str", linkURL)
+            multiURL = True
+    elif not isinstance(linkURL, str):
+        raise IncorrectDataType("linkURL", "str or list of str", linkURL)
     emojis = [firstEmoji, prevEmoji, nextEmoji, lastEmoji]
     for emoji in emojis:
         num = emojis.index(emoji) + 1
@@ -143,6 +180,10 @@ async def Paginator(
         raise IncorrectDataType("nextLabel", "ButtonStyle or int", nextStyle)
     if not isinstance(lastStyle, ButtonStyle) and not isinstance(lastStyle, int):
         raise IncorrectDataType("lastLabel", "ButtonStyle or int", lastStyle)
+    
+    if useIndexButton and useLinkButton:
+        BadButtons("Can not use index and link button at the same time!")
+        useLinkButton = False
         
     
     bid = random.randint(10000, 99999)  # base of button id
@@ -207,6 +248,13 @@ async def Paginator(
     useIndexButton = False if not useButtons else useIndexButton
     if not useIndexButton:
         controlButtons.pop(2)
+    if useLinkButton:
+        linkButton = create_button(
+            style=5,
+            label=linkLabel[0] if multiLabel else linkLabel,
+            url=linkURL[0] if multiURL else linkURL
+        )
+        controlButtons.append(linkButton)
     buttonControls = create_actionrow(*controlButtons)
     components = []
     if useSelect:
@@ -263,6 +311,15 @@ async def Paginator(
                     buttonControls["components"][2][
                         "label"
                     ] = f"Page {index+1}/{top}"  # updates the index
+                if useLinkButton:
+                    if multiLabel:
+                        buttonControls["components"][4][
+                            "label"
+                        ] = linkLabel[index]
+                    if multiURL:
+                        buttonControls["components"][4][
+                            "url"
+                        ] = linkURL[index]
                 if useSelect:
                     selectControls["components"][0][
                         "placeholder"
@@ -286,6 +343,15 @@ async def Paginator(
                     buttonControls["components"][2][
                         "label"
                     ] = f"Page {index+1}/{top}"  # updates the index
+                if useLinkButton:
+                    if multiLabel:
+                        buttonControls["components"][4][
+                            "label"
+                        ] = linkLabel[index]
+                    if multiURL:
+                        buttonControls["components"][4][
+                            "url"
+                        ] = linkURL[index]
                 if useSelect:
                     selectControls["components"][0][
                         "placeholder"
@@ -309,6 +375,15 @@ async def Paginator(
                     buttonControls["components"][2][
                         "label"
                     ] = f"Page {index+1}/{top}"  # updates the index
+                if useLinkButton:
+                    if multiLabel:
+                        buttonControls["components"][4][
+                            "label"
+                        ] = linkLabel[index]
+                    if multiURL:
+                        buttonControls["components"][4][
+                            "url"
+                        ] = linkURL[index]
                 if useSelect:
                     selectControls["components"][0][
                         "placeholder"
@@ -331,6 +406,15 @@ async def Paginator(
                     buttonControls["components"][2][
                         "label"
                     ] = f"Page {index+1}/{top}"  # updates the index
+                if useLinkButton:
+                    if multiLabel:
+                        buttonControls["components"][4][
+                            "label"
+                        ] = linkLabel[index]
+                    if multiURL:
+                        buttonControls["components"][4][
+                            "url"
+                        ] = linkURL[index]
                 if useSelect:
                     selectControls["components"][0][
                         "placeholder"
@@ -373,6 +457,15 @@ async def Paginator(
                         buttonControls["components"][2][
                             "label"
                         ] = f"Page {index+1}/{top}"  # updates the index
+                    if useLinkButton:
+                        if multiLabel:
+                            buttonControls["components"][4][
+                                "label"
+                            ] = linkLabel[index]
+                        if multiURL:
+                            buttonControls["components"][4][
+                                "url"
+                            ] = linkURL[index]
                 if useSelect:
                     selectControls["components"][0][
                         "placeholder"
