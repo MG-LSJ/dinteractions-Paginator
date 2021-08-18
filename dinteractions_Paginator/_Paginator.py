@@ -52,7 +52,7 @@ async def Paginator(
     lastLabel: Optional[str] = "",
     linkLabel: Optional[Union[str, List[str]]] = "",
     linkURL: Optional[Union[str, List[str]]] = "",
-    customButtonLabel:Optional[str] = None,
+    customButtonLabel: Optional[str] = None,
     firstEmoji: Optional[
         Union[discord.Emoji, discord.PartialEmoji, dict, bytes]
     ] = "⏮️",
