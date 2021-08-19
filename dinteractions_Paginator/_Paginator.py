@@ -49,7 +49,7 @@ async def Paginator(
     firstLabel: Optional[str] = "",
     prevLabel: Optional[str] = "",
     nextLabel: Optional[str] = "",
-    indexLabel: Optional[str]="",
+    indexLabel: Optional[str]="Page:",
     lastLabel: Optional[str] = "",
     linkLabel: Optional[Union[str, List[str]]] = "",
     linkURL: Optional[Union[str, List[str]]] = "",

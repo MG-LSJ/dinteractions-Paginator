@@ -102,6 +102,7 @@ bot.run("token")
 #### Labels:
 - `firstLabel` - `Optional[str]`: The label of the button used to go to the first page, defaults to `""`
 - `prevLabel` - `Optional[str]`: The label of the button used to go to the previous page, defaults to `""`
+- `indexLabel` - `Optional[str]`: The label of the index button, defaults to `Page:`
 - `nextLabel` - `Optional[str]`: The label of the button used to go to the next page, defaults to `""`
 - `lastLabel` - `Optional[str]`: The label of the button used to go to the last page, defaults to `""`
 - `linkLabel` - `Optional[Union[str, List[str]]]`: The label for the link button
