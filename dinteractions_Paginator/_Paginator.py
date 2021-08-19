@@ -49,6 +49,7 @@ async def Paginator(
     firstLabel: Optional[str] = "",
     prevLabel: Optional[str] = "",
     nextLabel: Optional[str] = "",
+    indexLabel: Optional[str]="",
     lastLabel: Optional[str] = "",
     linkLabel: Optional[Union[str, List[str]]] = "",
     linkURL: Optional[Union[str, List[str]]] = "",
@@ -90,6 +91,7 @@ async def Paginator(
     :param useLinkButton: uses link button
     :param firstLabel: label of first page button
     :param prevLabel: label of previous page button
+    :param indexLabel: label of the index button
     :param nextLabel: label of next page button
     :param lastLabel: label of last page button
     :param linkLabel: label of link button
@@ -112,6 +114,8 @@ async def Paginator(
     multiLabel = False
     multiURL = False
     useCustomButton= False
+
+    #ERROR HANDLING
 
     if not isinstance(bot, commands.Bot):
         raise IncorrectDataType("bot", "commands.Bot", bot)
@@ -242,7 +246,7 @@ async def Paginator(
         # Index
         create_button(
             style=indexStyle,
-            label=f"Page {index+1}/{top}",
+            label=f"{indexLabel} {index+1}/{top}",
             disabled=True,
             custom_id=f"{bid}-index",
         ),
