@@ -444,7 +444,7 @@ async def Paginator(
                 await button_context.edit_origin(
                     content=content[index] if multiContent else content, embed=pages[index], components=components
                 )
-            # handling next button
+            # Handling next button
             if button_context.component_id == f"{bid}-next" and index < top - 1:
                 index = index + 1  # add 1 to the index
                 if index == top - 1:
