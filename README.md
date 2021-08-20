@@ -2,6 +2,12 @@
 Unofficial discord-interactions multi-page embed handler
 
 [![Discord](https://img.shields.io/discord/859508565101248582?color=blue&label=discord&style=for-the-badge)](https://discord.gg/UYCaSsMewk) [![PyPI - Downloads](https://img.shields.io/pypi/dm/dinteractions-Paginator?color=blue&style=for-the-badge)](https://pypi.org/project/dinteractions-Paginator/)
+
+### Join our [Discord server](https://discord.gg/UYCaSsMewk)!
+- Try out all the possible combinations of the paginator with `/example1` and `/example2`,
+- Ask some questions,
+- And give us feedback and suggestions!
+
 ## Features
 - Message per embed or persistent message
 - Index select that can be turned on/off
@@ -11,7 +17,7 @@ Unofficial discord-interactions multi-page embed handler
 
 ## Installation
 ```
-pip install dinteractions-Paginator
+pip install -U dinteractions-Paginator
 ```
 
 ### Dependencies
@@ -98,11 +104,12 @@ bot.run("token")
 - `useSelect` - `Optional[bool]`: uses a select, default is `True`
 - `useIndexButton` - `Optional[bool]`: uses the index button, default is `False` and stays `False` if `useButtons` is also `False`
 - `useLinkButton` - `Optional[bool]`: uses the link button
+- `useFirstLast` - `Optional[bool]`: uses the first and last buttons, default `True`
 
 #### Labels:
 - `firstLabel` - `Optional[str]`: The label of the button used to go to the first page, defaults to `""`
 - `prevLabel` - `Optional[str]`: The label of the button used to go to the previous page, defaults to `""`
-- `indexLabel` - `Optional[str]`: The label of the index button, defaults to `Page:`
+- `indexLabel` - `Optional[str]`: The label of the index button, defaults to `"Page"`
 - `nextLabel` - `Optional[str]`: The label of the button used to go to the next page, defaults to `""`
 - `lastLabel` - `Optional[str]`: The label of the button used to go to the last page, defaults to `""`
 - `linkLabel` - `Optional[Union[str, List[str]]]`: The label for the link button
@@ -114,12 +121,12 @@ bot.run("token")
 - `prevEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, bytes]`: emoji of the button used to go to the previous page, defaults to `"◀"`
 - `nextEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, bytes]`: emoji of the button used to go to the next page, defaults to `"▶"`
 - `lastEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, bytes]`: emoji of the button used to go to the last page, defaults to `"⏭️"`
-- `lastEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, bytes]`: emoji of the custom disabled button, defaults to `None`
+- `customButtonEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, bytes]`: emoji of the custom disabled button, defaults to `None`
 
 #### Styles (the colo[u]r of the buttons):
-- `indexStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the index button, defaults to `3` (`ButtonStyle.green`)
 - `firstStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the first button, defaults to `1` (`ButtonStyle.blue`)
 - `prevStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the previous button, defaults to `1` (`ButtonStyle.blue`)
+- `indexStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the index button, defaults to `3` (`ButtonStyle.green`)
 - `nextStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the next button, defaults to `1` (`ButtonStyle.blue`)
 - `lastStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the last button, defaults to `1` (`ButtonStyle.blue`)
 - `customButtonStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the last button, defaults to `2` (`ButtonStyle.gray`)
