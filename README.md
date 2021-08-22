@@ -21,14 +21,14 @@ pip install -U dinteractions-Paginator
 ```
 
 ### Dependencies
-- [discord.py](https://pypi.org/project/discord.py/)
-- [discord-interactions](https://pypi.org/project/discord-interactions/)
+- [discord.py](https://pypi.org/project/discord.py/) (version 1.7.3)
+- [discord-interactions](https://pypi.org/project/discord-interactions/) (version 3.0.1 or 3.0.1a)
 
 ## Example GIF:
 <div align="left">
     Paginator with select:<br>
     <img src="https://cdn.discordapp.com/attachments/871853650568417310/873731782514728980/o8YSi1nzvT.gif" height="400">
-<div>
+</div>
 
 ## Examples:
 These simple examples show how to easily create interactive, multiple page embeds that annyone can interact with that automatically deactivate after 60 seconds of inactivity:
@@ -43,6 +43,10 @@ from dinteractions_Paginator import Paginator
 bot = commands.Bot(command_prefix="/")
 slash = SlashCommand(bot, sync_commands=True)
 
+@bot.event
+async def on_ready():
+    print(f"Logged in as {bot.user}!")
+
 @slash.slash(name="embeds")
 async def embeds(ctx: SlashContext):
     one = discord.Embed(title="1st Embed", description="General Kenobi!", color=discord.Color.red())
@@ -52,8 +56,8 @@ async def embeds(ctx: SlashContext):
     five = discord.Embed(title="5th Embed", description="General Kenobi!", color=discord.Color.blue())
     pages = [one, two, three, four, five]
 
-    await Paginator(bot=bot, ctx=ctx, pages=pages, content=["1", "2", "3", "4", "5"], timeout=60)
- 
+    await Paginator(bot=bot, ctx=ctx, pages=pages, content=["1", "2", "3", "4", "5"], timeout=60).run()
+
 bot.run("token")
 ```
 
@@ -64,8 +68,12 @@ from discord.ext import commands
 from discord_slash import SlashCommand
 from dinteractions_Paginator import Paginator
 
-bot = commands.Bot(command_prefix="t")
+bot = commands.Bot(command_prefix="/")
 slash = SlashCommand(bot)
+
+@bot.event
+async def on_ready():
+    print(f"Logged in as {bot.user}!")
 
 @bot.command()
 async def embeds(ctx):
@@ -76,8 +84,8 @@ async def embeds(ctx):
     five = discord.Embed(title="5th Embed", description="General Kenobi!", color=discord.Color.blue())
     pages = [one, two, three, four, five]
 
-    await Paginator(bot=bot, ctx=ctx, pages=pages, content=["1", "2", "3", "4", "5"], timeout=60)
- 
+    await Paginator(bot=bot, ctx=ctx, pages=pages, content=["1", "2", "3", "4", "5"], timeout=60).run()
+
 bot.run("token")
 ```
 **NOTE: `slash = SlashCommand(bot)` required to override `bot`**
@@ -136,3 +144,5 @@ bot.run("token")
 - Contributors of [discord-interactions](https://pypi.org/project/discord-py-slash-command/)
     - [GitHub](https://github.com/discord-py-slash-commands/discord-py-interactions)
     - [Discord server](https://discord.gg/KkgMBVuEkx)
+- [dpy-slash-button-paginator](https://pypi.org/project/dpy-slash-button-paginator/)
+    - [GitHub](https://github.com/Catalyst4222/ButtonPaginator)
