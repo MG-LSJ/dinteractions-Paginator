@@ -21,8 +21,8 @@ pip install -U dinteractions-Paginator
 ```
 
 ### Dependencies
-- [discord.py](https://pypi.org/project/discord.py/)
-- [discord-interactions](https://pypi.org/project/discord-interactions/)
+- [discord.py](https://pypi.org/project/discord.py/) (version 1.7.3)
+- [discord-interactions](https://pypi.org/project/discord-interactions/) (version 3.0.1 or 3.0.1a)
 
 ## Example GIF:
 <div align="left">
