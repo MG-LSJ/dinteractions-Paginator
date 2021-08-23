@@ -1,6 +1,6 @@
 from asyncio import TimeoutError
 from typing import Optional, Union, List
-
+from time import time
 from discord import (
     Embed,
     User,
@@ -124,6 +124,8 @@ class Paginator:
         self.multiLabel = False
         self.multiURL = False
         self.useCustomButton = False
+        self.successfulUsers = [ctx.author]
+        self.failedUsers = []
 
         # ERROR HANDLING
 
@@ -250,29 +252,34 @@ class Paginator:
         )
         # handling the interaction
         tmt = True  # stop listening when timeout expires
+        start = time()
+        buttonContext = None
         while tmt:
             try:
-                button_context: ComponentContext = await wait_for_component(
+                buttonContext: ComponentContext = await wait_for_component(
                     self.bot, check=self.check, components=self.components(), timeout=self.timeout
                 )
-                if button_context.custom_id == "first":
+                if buttonContext.author not in self.successfulUsers:
+                    self.successfulUsers.append(buttonContext.author)
+                if buttonContext.custom_id == "first":
                     self.index = 1
-                elif button_context.custom_id == "prev":
+                elif buttonContext.custom_id == "prev":
                     self.index = self.index - 1 or 1
-                elif button_context.custom_id == "next":
+                elif buttonContext.custom_id == "next":
                     self.index = self.index + 1 or self.top
-                elif button_context.custom_id == "last":
+                elif buttonContext.custom_id == "last":
                     self.index = self.top
-                elif button_context.custom_id == "select":
-                    self.index = int(button_context.selected_options[0])
+                elif buttonContext.custom_id == "select":
+                    self.index = int(buttonContext.selected_options[0])
 
-                await button_context.edit_origin(
+                await buttonContext.edit_origin(
                     content=self.content[self.index - 1] if self.multiContent else self.content,
                     embed=self.pages[self.index - 1],
                     components=self.components()
                 )
             except TimeoutError:
                 tmt = False
+                end = time()
                 if self.deleteAfterTimeout:
                     await msg.edit(components=None)
                 elif self.disableAfterTimeout:
@@ -281,9 +288,14 @@ class Paginator:
                         for component in row["components"]:
                             component["disabled"] = True
                     await msg.edit(components=components)
+                timeTaken = round(end - start)
+                lastEmbed = self.pages[self.index - 1]
+                return TimedOut(self.ctx, buttonContext, timeTaken, lastEmbed, self.successfulUsers, self.failedUsers)
 
-    def check(self, button_context):
-        if self.authorOnly and button_context.author.id != self.ctx.author.id:
+    def check(self, buttonContext):
+        if self.authorOnly and buttonContext.author.id != self.ctx.author.id:
+            if buttonContext.author not in self.failedUsers:
+                self.failedUsers.append(buttonContext.author)
             return False
         if self.onlyFor is not None:
             check = False
@@ -291,13 +303,19 @@ class Paginator:
                 for user in filter(
                         lambda x: isinstance(x, userUser), self.onlyFor
                 ):
-                    check = check or user.id == button_context.author.id
+                    check = check or user.id == buttonContext.author.id
                 for role in filter(
                         lambda x: isinstance(x, roleRole), self.onlyFor
                 ):
-                    check = check or role in button_context.author.roles
+                    check = check or role in buttonContext.author.roles
+            else:
+                if isinstance(self.onlyFor, userUser):
+                    check = check or self.onlyFor.id == buttonContext.author.id
+                elif isinstance(self.onlyFor, roleRole):
+                    check = check or self.onlyFor in buttonContext.author.roles
 
             if not check:
+                self.failedUsers.append(buttonContext.author)
                 return False
 
         return True
@@ -312,13 +330,13 @@ class Paginator:
                 label=self.prevLabel,
                 custom_id="prev",
                 disabled=disableLeft,
-                emoji=self.prevEmoji,
+                emoji=self.prevEmoji
             ),
             # Index
             create_button(
                 style=self.indexStyle,
                 label=f"{self.indexLabel} {self.index}/{self.top}",
-                disabled=True,
+                disabled=True
             ),
             # Next Button
             create_button(
@@ -326,7 +344,7 @@ class Paginator:
                 label=self.nextLabel,
                 custom_id="next",
                 disabled=disableRight,
-                emoji=self.nextEmoji,
+                emoji=self.nextEmoji
             )
         ]
         if not self.useIndexButton:
@@ -340,7 +358,7 @@ class Paginator:
                     custom_id="first",
                     disabled=disableLeft,
                     emoji=self.firstEmoji,
-                ),
+                )
             )
             controlButtons.append(
                 create_button(
@@ -393,10 +411,20 @@ class Paginator:
                 custom_id="select",
                 placeholder=f"{self.indexLabel} {self.index}/{self.top}",
                 min_values=1,
-                max_values=1,
+                max_values=1
             )
             selectControls = create_actionrow(select)
             components.append(selectControls)
         if self.useButtons:
             components.append(buttonControls)
         return components
+
+
+class TimedOut:
+    def __init__(self, ctx, buttonContext, timeTaken, lastEmbed, successfulUsers, failedUsers):
+        self.ctx = ctx
+        self.buttonContext = buttonContext
+        self.timeTaken = timeTaken
+        self.lastEmbed = lastEmbed
+        self.successfulUsers = successfulUsers
+        self.failedUsers = failedUsers
