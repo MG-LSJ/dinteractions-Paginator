@@ -103,6 +103,8 @@ bot.run("token")
 ```
 #### <a name="note"></a> **NOTE: `slash = SlashCommand(bot)` required to override `bot`**
 
+------------------------------
+
 ## <a name="paginator"></a> *class* Paginator
 
 ### <a name="args"></a> Arguments
