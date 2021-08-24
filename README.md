@@ -129,6 +129,7 @@ bot.run("token")
 - `hidden` - `Optional[bool]`: if you want the paginator to be hidden, default `False`
 - `authorOnly` - `Optional[bool]`: if you want the paginator to work for the author only, default is `False`
 - `onlyFor` - `Optional[Union[discord.User, discord.Role, List[Union[discord.User, discord.Role]]]]`: components only for specified user(s) or role(s)
+- `dm` - `Optional[bool]`: if you want the paginator to be DM'ed, default `False`
 
 #### <a name="time"></a> Time:
 - `timeout` - `Optional[int]`: deactivates paginator after inactivity if enabled, defaults to `None` (meaning no timeout)
@@ -168,7 +169,7 @@ bot.run("token")
 - `customButtonStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the last button, defaults to `2` (`ButtonStyle.gray`)
 
 ### <a name="returns"></a> Returns
-*class* TimedOut
+[*class* TimedOut](#timed)
 
 ------------------------------
 
