@@ -35,10 +35,10 @@ pip install -U dinteractions-Paginator
 
 ### <a name="dep"></a> Dependencies
 - [discord.py](https://pypi.org/project/discord.py/) (version 1.7.3)
-- [discord-interactions](https://pypi.org/project/discord-interactions/) (version 3.0.1 or 3.0.1a)
+- [discord-interactions](https://pypi.org/project/discord-interactions/) (version 3.0.1 - 3.0.2)
 
 ## <a name="examples"></a> Examples:
-These simple examples show how to easily create interactive, multiple page embeds that annyone can interact with that automatically deactivate after 60 seconds of inactivity:
+These simple examples show how to easily create interactive, multiple page embeds that anyone can interact with that automatically deactivate after 60 seconds of inactivity:
 
 ### <a name="gif"></a> Example GIF:
 <div align="left">
