@@ -103,8 +103,6 @@ bot.run("token")
 ```
 #### <a name="note"></a> **NOTE: `slash = SlashCommand(bot)` required to override `bot`**
 
-------------------------------
-
 ## <a name="paginator"></a> *class* Paginator
 
 ### <a name="args"></a> Arguments
@@ -127,6 +125,7 @@ bot.run("token")
 
 ### <a name="opt"></a> Optional:
 - `content` - `Optional[Union[str, List[str]]]`: the content of the message to send, defaults to `None`
+- `hidden` - `Optional[bool]`: if you want the paginator to be hidden, default `False`
 - `authorOnly` - `Optional[bool]`: if you want the paginator to work for the author only, default is `False`
 - `onlyFor` - `Optional[Union[discord.User, discord.Role, List[Union[discord.User, discord.Role]]]]`: components only for specified user(s) or role(s)
 
