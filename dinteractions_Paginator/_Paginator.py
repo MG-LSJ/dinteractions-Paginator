@@ -2,12 +2,12 @@ from asyncio import TimeoutError
 from time import time
 from typing import List, Optional, Union
 
-from discord import Embed, Emoji, PartialEmoji, Role, User
+from discord import Embed, Emoji, Member, PartialEmoji, Role, TextChannel, User
 from discord.abc import User as userUser
 from discord.ext import commands
 from discord.role import Role as roleRole
 from discord_slash import SlashContext
-from discord_slash.context import ComponentContext
+from discord_slash.context import ComponentContext, MenuContext
 from discord_slash.model import ButtonStyle
 from discord_slash.utils.manage_components import (
     create_actionrow,
@@ -17,7 +17,7 @@ from discord_slash.utils.manage_components import (
     wait_for_component,
 )
 
-from .errors import (
+from errors import (
     BadButtons,
     BadContent,
     BadEmoji,
@@ -31,7 +31,15 @@ class Paginator:
     def __init__(
         self,
         bot: commands.Bot,
-        ctx: Union[SlashContext, commands.Context],
+        ctx: Union[
+            SlashContext,
+            commands.Context,
+            ComponentContext,
+            MenuContext,
+            TextChannel,
+            User,
+            Member,
+        ],
         pages: List[Embed],
         content: Optional[Union[str, List[str]]] = None,
         hidden: Optional[bool] = False,
@@ -111,17 +119,31 @@ class Paginator:
         self.multiLabel = False
         self.multiURL = False
         self.useCustomButton = False
-        self.successfulUsers = [ctx.author]
+        try:
+            self.successfulUsers = [ctx.author]
+        except AttributeError:
+            self.successfulUsers = [ctx]
         self.failedUsers = []
 
         # ERROR HANDLING
 
         if not isinstance(self.bot, commands.Bot):
             raise IncorrectDataType("bot", "commands.Bot", self.bot)
-        if not isinstance(self.ctx, SlashContext) and not isinstance(
-            self.ctx, commands.Context
+        if (
+            not isinstance(self.ctx, SlashContext)
+            and not isinstance(self.ctx, commands.Context)
+            and not isinstance(self.ctx, ComponentContext)
+            and not isinstance(self.ctx, MenuContext)
+            and not isinstance(self.ctx, TextChannel)
+            and not isinstance(self.ctx, User)
+            and not isinstance(self.ctx, Member)
         ):
-            raise IncorrectDataType("ctx", "SlashContext or commands.Context", self.ctx)
+            raise IncorrectDataType(
+                "ctx",
+                "SlashContext, commands.Context, ComponentContext, MenuContext, discord.TextChannel, discord.User,"
+                + " or discord.Member",
+                self.ctx,
+            )
         if isinstance(self.content, list):
             if len(self.content) < self.top:
                 self.content = self.content[0]
@@ -273,12 +295,19 @@ class Paginator:
         self.index = 1
 
     async def run(self):
-        msg = await self.ctx.send(
-            content=self.content[0] if self.multiContent else self.content,
-            embed=self.pages[0],
-            components=self.components(),
-            hidden=self.hidden,
-        )
+        try:
+            msg = await self.ctx.send(
+                content=self.content[0] if self.multiContent else self.content,
+                embed=self.pages[0],
+                components=self.components(),
+                hidden=self.hidden,
+            )
+        except TypeError:
+            msg = await self.ctx.send(
+                content=self.content[0] if self.multiContent else self.content,
+                embed=self.pages[0],
+                components=self.components(),
+            )
         # handling the interaction
         tmt = True  # stop listening when timeout expires
         start = time()
