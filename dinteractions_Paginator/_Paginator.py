@@ -1,94 +1,81 @@
 from asyncio import TimeoutError
-from typing import Optional, Union, List
 from time import time
-from discord import (
-    Embed,
-    User,
-    Role,
-    Emoji,
-    PartialEmoji
-)
-from discord.role import Role as roleRole
+from typing import List, Optional, Union
+
+from discord import Embed, Emoji, PartialEmoji, Role, User
 from discord.abc import User as userUser
 from discord.ext import commands
+from discord.role import Role as roleRole
 from discord_slash import SlashContext
 from discord_slash.context import ComponentContext
 from discord_slash.model import ButtonStyle
 from discord_slash.utils.manage_components import (
     create_actionrow,
     create_button,
-    wait_for_component,
     create_select,
-    create_select_option
+    create_select_option,
+    wait_for_component,
 )
 
 from .errors import (
-    BadContent,
     BadButtons,
-    IncorrectDataType,
+    BadContent,
     BadEmoji,
     BadOnly,
-    TooManyButtons
+    IncorrectDataType,
+    TooManyButtons,
 )
 
 
 class Paginator:
     def __init__(
-            self,
-            bot: commands.Bot,
-            ctx: Union[SlashContext, commands.Context],
-            pages: List[Embed],
-            content: Optional[Union[str, List[str]]] = None,
-            authorOnly: Optional[bool] = False,
-            onlyFor: Optional[
-                Union[
-                    User,
-                    Role,
-                    List[Union[User, Role]],
-                ]
-            ] = None,
-            timeout: Optional[int] = None,
-            disableAfterTimeout: Optional[bool] = True,
-            deleteAfterTimeout: Optional[bool] = False,
-            useSelect: Optional[bool] = True,
-            useButtons: Optional[bool] = True,
-            useIndexButton: Optional[bool] = None,
-            useLinkButton: Optional[bool] = False,
-            useFirstLast: Optional[bool] = True,
-            firstLabel: Optional[str] = "",
-            prevLabel: Optional[str] = "",
-            indexLabel: Optional[str] = "Page",
-            nextLabel: Optional[str] = "",
-            lastLabel: Optional[str] = "",
-            linkLabel: Optional[Union[str, List[str]]] = "",
-            linkURL: Optional[Union[str, List[str]]] = "",
-            customButtonLabel: Optional[str] = None,
-            firstEmoji: Optional[
-                Union[Emoji, PartialEmoji, dict, str]
-            ] = "⏮️",
-            prevEmoji: Optional[
-                Union[Emoji, PartialEmoji, dict, str]
-            ] = "◀",
-            nextEmoji: Optional[
-                Union[Emoji, PartialEmoji, dict, str]
-            ] = "▶",
-            lastEmoji: Optional[
-                Union[Emoji, PartialEmoji, dict, str]
-            ] = "⏭️",
-            customButtonEmoji: Optional[
-                Union[Emoji, PartialEmoji, dict, str]
-            ] = None,
-            firstStyle: Optional[Union[ButtonStyle, int]] = 1,
-            prevStyle: Optional[Union[ButtonStyle, int]] = 1,
-            indexStyle: Optional[Union[ButtonStyle, int]] = 2,
-            nextStyle: Optional[Union[ButtonStyle, int]] = 1,
-            lastStyle: Optional[Union[ButtonStyle, int]] = 1,
-            customButtonStyle: Optional[Union[ButtonStyle, int]] = 2
+        self,
+        bot: commands.Bot,
+        ctx: Union[SlashContext, commands.Context],
+        pages: List[Embed],
+        content: Optional[Union[str, List[str]]] = None,
+        hidden: Optional[bool] = False,
+        authorOnly: Optional[bool] = False,
+        onlyFor: Optional[
+            Union[
+                User,
+                Role,
+                List[Union[User, Role]],
+            ]
+        ] = None,
+        timeout: Optional[int] = None,
+        disableAfterTimeout: Optional[bool] = True,
+        deleteAfterTimeout: Optional[bool] = False,
+        useSelect: Optional[bool] = True,
+        useButtons: Optional[bool] = True,
+        useIndexButton: Optional[bool] = None,
+        useLinkButton: Optional[bool] = False,
+        useFirstLast: Optional[bool] = True,
+        firstLabel: Optional[str] = "",
+        prevLabel: Optional[str] = "",
+        indexLabel: Optional[str] = "Page",
+        nextLabel: Optional[str] = "",
+        lastLabel: Optional[str] = "",
+        linkLabel: Optional[Union[str, List[str]]] = "",
+        linkURL: Optional[Union[str, List[str]]] = "",
+        customButtonLabel: Optional[str] = None,
+        firstEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "⏮️",
+        prevEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "◀",
+        nextEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "▶",
+        lastEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "⏭️",
+        customButtonEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = None,
+        firstStyle: Optional[Union[ButtonStyle, int]] = 1,
+        prevStyle: Optional[Union[ButtonStyle, int]] = 1,
+        indexStyle: Optional[Union[ButtonStyle, int]] = 2,
+        nextStyle: Optional[Union[ButtonStyle, int]] = 1,
+        lastStyle: Optional[Union[ButtonStyle, int]] = 1,
+        customButtonStyle: Optional[Union[ButtonStyle, int]] = 2,
     ):
         self.bot = bot
         self.ctx = ctx
         self.pages = pages
         self.content = content
+        self.hidden = hidden
         self.authorOnly = authorOnly
         self.onlyFor = onlyFor
         self.timeout = timeout
@@ -131,7 +118,9 @@ class Paginator:
 
         if not isinstance(self.bot, commands.Bot):
             raise IncorrectDataType("bot", "commands.Bot", self.bot)
-        if not isinstance(self.ctx, SlashContext) and not isinstance(self.ctx, commands.Context):
+        if not isinstance(self.ctx, SlashContext) and not isinstance(
+            self.ctx, commands.Context
+        ):
             raise IncorrectDataType("ctx", "SlashContext or commands.Context", self.ctx)
         if isinstance(self.content, list):
             if len(self.content) < self.top:
@@ -139,7 +128,7 @@ class Paginator:
                 if not isinstance(self.content, str):
                     raise BadContent(self.content)
             else:
-                self.content = self.content[:self.top]
+                self.content = self.content[: self.top]
                 for s in self.content:
                     if not isinstance(s, str):
                         raise BadContent(self.content)
@@ -147,27 +136,38 @@ class Paginator:
         elif not isinstance(self.content, str):
             if self.content is not None:
                 raise BadContent(self.content)
+        if not isinstance(self.hidden, bool):
+            raise IncorrectDataType("hidden", "bool", self.hidden)
         if not isinstance(self.authorOnly, bool):
             raise IncorrectDataType("authorOnly", "bool", self.authorOnly)
         if not isinstance(self.onlyFor, User):
             if not isinstance(self.onlyFor, Role):
                 if not isinstance(self.onlyFor, list):
                     if self.onlyFor is not None:
-                        raise IncorrectDataType("onlyFor",
-                                                "discord.User, Role, or list of discord.User/Role",
-                                                self.onlyFor)
+                        raise IncorrectDataType(
+                            "onlyFor",
+                            "discord.User, Role, or list of discord.User/Role",
+                            self.onlyFor,
+                        )
         if not isinstance(self.timeout, int):
             if self.timeout is not None:
                 raise IncorrectDataType("timeout", "int", self.timeout)
         if not isinstance(self.disableAfterTimeout, bool):
-            raise IncorrectDataType("disableAfterTimeout", "bool", self.disableAfterTimeout)
+            raise IncorrectDataType(
+                "disableAfterTimeout", "bool", self.disableAfterTimeout
+            )
         if not isinstance(self.deleteAfterTimeout, bool):
-            raise IncorrectDataType("deleteAfterTimeout", "bool", self.deleteAfterTimeout)
+            raise IncorrectDataType(
+                "deleteAfterTimeout", "bool", self.deleteAfterTimeout
+            )
         if not isinstance(self.useSelect, bool):
             raise IncorrectDataType("useSelect", "bool", self.useSelect)
         if not isinstance(self.useButtons, bool):
             raise IncorrectDataType("useButtons", "bool", self.useButtons)
-        if not isinstance(self.useIndexButton, bool) and self.useIndexButton is not None:
+        if (
+            not isinstance(self.useIndexButton, bool)
+            and self.useIndexButton is not None
+        ):
             raise IncorrectDataType("useIndexButton", "bool", self.useIndexButton)
         if not isinstance(self.useLinkButton, bool):
             raise IncorrectDataType("useLinkButton", "bool", self.useLinkButton)
@@ -184,12 +184,16 @@ class Paginator:
             if len(self.linkLabel) < self.top:
                 self.linkLabel = self.linkLabel[0]
                 if not isinstance(self.linkLabel, str):
-                    raise IncorrectDataType("linkLabel", "str or list of str", self.linkLabel)
+                    raise IncorrectDataType(
+                        "linkLabel", "str or list of str", self.linkLabel
+                    )
             else:
-                self.linkLabel = self.linkLabel[:self.top]
+                self.linkLabel = self.linkLabel[: self.top]
                 for s in self.linkLabel:
                     if not isinstance(s, str):
-                        raise IncorrectDataType("linkLabel", "str or list of str", self.linkLabel)
+                        raise IncorrectDataType(
+                            "linkLabel", "str or list of str", self.linkLabel
+                        )
                 self.multiLabel = True
         elif not isinstance(self.linkLabel, str):
             raise IncorrectDataType("linkLabel", "str or list of str", self.linkLabel)
@@ -197,36 +201,60 @@ class Paginator:
             if len(self.linkURL) < self.top:
                 self.linkURL = self.linkURL[0]
                 if not isinstance(self.linkURL, str):
-                    raise IncorrectDataType("linkURL", "str or list of str", self.linkURL)
+                    raise IncorrectDataType(
+                        "linkURL", "str or list of str", self.linkURL
+                    )
             else:
-                self.linkURL = self.linkURL[:self.top]
+                self.linkURL = self.linkURL[: self.top]
                 for s in self.linkURL:
                     if not isinstance(s, str):
-                        raise IncorrectDataType("linkURL", "str or list of str", self.linkURL)
+                        raise IncorrectDataType(
+                            "linkURL", "str or list of str", self.linkURL
+                        )
                 self.multiURL = True
         elif not isinstance(self.linkURL, str):
             raise IncorrectDataType("linkURL", "str or list of str", self.linkURL)
         if not isinstance(self.customButtonLabel, str):
             if self.customButtonLabel is not None:
-                raise IncorrectDataType("customButtonLabel", "str", self.customButtonLabel)
+                raise IncorrectDataType(
+                    "customButtonLabel", "str", self.customButtonLabel
+                )
         emojis = [self.firstEmoji, self.prevEmoji, self.nextEmoji, self.lastEmoji]
         for emoji in emojis:
             num = emojis.index(emoji) + 1
-            if not isinstance(emoji, Emoji) and not isinstance(emoji, PartialEmoji) and not isinstance(
-                    emoji, dict) and not isinstance(emoji, str):
+            if (
+                not isinstance(emoji, Emoji)
+                and not isinstance(emoji, PartialEmoji)
+                and not isinstance(emoji, dict)
+                and not isinstance(emoji, str)
+            ):
                 raise BadEmoji(num)
-        if not isinstance(self.indexStyle, ButtonStyle) and not isinstance(self.indexStyle, int):
+        if not isinstance(self.indexStyle, ButtonStyle) and not isinstance(
+            self.indexStyle, int
+        ):
             raise IncorrectDataType("indexStyle", "ButtonStyle or int", self.indexStyle)
-        if not isinstance(self.firstStyle, ButtonStyle) and not isinstance(self.firstStyle, int):
+        if not isinstance(self.firstStyle, ButtonStyle) and not isinstance(
+            self.firstStyle, int
+        ):
             raise IncorrectDataType("firstStyle", "ButtonStyle or int", self.firstStyle)
-        if not isinstance(self.prevStyle, ButtonStyle) and not isinstance(self.prevStyle, int):
+        if not isinstance(self.prevStyle, ButtonStyle) and not isinstance(
+            self.prevStyle, int
+        ):
             raise IncorrectDataType("prevStyle", "ButtonStyle or int", self.prevStyle)
-        if not isinstance(self.nextStyle, ButtonStyle) and not isinstance(self.nextStyle, int):
+        if not isinstance(self.nextStyle, ButtonStyle) and not isinstance(
+            self.nextStyle, int
+        ):
             raise IncorrectDataType("nextStyle", "ButtonStyle or int", self.nextStyle)
-        if not isinstance(self.lastStyle, ButtonStyle) and not isinstance(self.lastStyle, int):
+        if not isinstance(self.lastStyle, ButtonStyle) and not isinstance(
+            self.lastStyle, int
+        ):
             raise IncorrectDataType("lastStyle", "ButtonStyle or int", self.lastStyle)
-        if not isinstance(self.customButtonStyle, ButtonStyle) and not isinstance(self.customButtonStyle, int):
-            raise IncorrectDataType("customButtonStyle", "ButtonStyle or int", self.customButtonStyle)
+        if not isinstance(self.customButtonStyle, ButtonStyle) and not isinstance(
+            self.customButtonStyle, int
+        ):
+            raise IncorrectDataType(
+                "customButtonStyle", "ButtonStyle or int", self.customButtonStyle
+            )
         if self.useIndexButton and not self.useButtons:
             BadButtons("Index button cannot be used with useButtons=False!")
 
@@ -248,7 +276,8 @@ class Paginator:
         msg = await self.ctx.send(
             content=self.content[0] if self.multiContent else self.content,
             embed=self.pages[0],
-            components=self.components()
+            components=self.components(),
+            hidden=self.hidden,
         )
         # handling the interaction
         tmt = True  # stop listening when timeout expires
@@ -257,7 +286,10 @@ class Paginator:
         while tmt:
             try:
                 buttonContext: ComponentContext = await wait_for_component(
-                    self.bot, check=self.check, components=self.components(), timeout=self.timeout
+                    self.bot,
+                    check=self.check,
+                    components=self.components(),
+                    timeout=self.timeout,
                 )
                 if buttonContext.author not in self.successfulUsers:
                     self.successfulUsers.append(buttonContext.author)
@@ -273,16 +305,18 @@ class Paginator:
                     self.index = int(buttonContext.selected_options[0])
 
                 await buttonContext.edit_origin(
-                    content=self.content[self.index - 1] if self.multiContent else self.content,
+                    content=self.content[self.index - 1]
+                    if self.multiContent
+                    else self.content,
                     embed=self.pages[self.index - 1],
-                    components=self.components()
+                    components=self.components(),
                 )
             except TimeoutError:
                 tmt = False
                 end = time()
-                if self.deleteAfterTimeout:
+                if self.deleteAfterTimeout and not self.hidden:
                     await msg.edit(components=None)
-                elif self.disableAfterTimeout:
+                elif self.disableAfterTimeout and not self.hidden:
                     components = self.components()
                     for row in components:
                         for component in row["components"]:
@@ -290,7 +324,14 @@ class Paginator:
                     await msg.edit(components=components)
                 timeTaken = round(end - start)
                 lastEmbed = self.pages[self.index - 1]
-                return TimedOut(self.ctx, buttonContext, timeTaken, lastEmbed, self.successfulUsers, self.failedUsers)
+                return TimedOut(
+                    self.ctx,
+                    buttonContext,
+                    timeTaken,
+                    lastEmbed,
+                    self.successfulUsers,
+                    self.failedUsers,
+                )
 
     def check(self, buttonContext):
         if self.authorOnly and buttonContext.author.id != self.ctx.author.id:
@@ -300,13 +341,9 @@ class Paginator:
         if self.onlyFor is not None:
             check = False
             if isinstance(self.onlyFor, list):
-                for user in filter(
-                        lambda x: isinstance(x, userUser), self.onlyFor
-                ):
+                for user in filter(lambda x: isinstance(x, userUser), self.onlyFor):
                     check = check or user.id == buttonContext.author.id
-                for role in filter(
-                        lambda x: isinstance(x, roleRole), self.onlyFor
-                ):
+                for role in filter(lambda x: isinstance(x, roleRole), self.onlyFor):
                     check = check or role in buttonContext.author.roles
             else:
                 if isinstance(self.onlyFor, userUser):
@@ -330,13 +367,13 @@ class Paginator:
                 label=self.prevLabel,
                 custom_id="prev",
                 disabled=disableLeft,
-                emoji=self.prevEmoji
+                emoji=self.prevEmoji,
             ),
             # Index
             create_button(
                 style=self.indexStyle,
                 label=f"{self.indexLabel} {self.index}/{self.top}",
-                disabled=True
+                disabled=True,
             ),
             # Next Button
             create_button(
@@ -344,8 +381,8 @@ class Paginator:
                 label=self.nextLabel,
                 custom_id="next",
                 disabled=disableRight,
-                emoji=self.nextEmoji
-            )
+                emoji=self.nextEmoji,
+            ),
         ]
         if not self.useIndexButton:
             controlButtons.pop(1)
@@ -358,7 +395,7 @@ class Paginator:
                     custom_id="first",
                     disabled=disableLeft,
                     emoji=self.firstEmoji,
-                )
+                ),
             )
             controlButtons.append(
                 create_button(
@@ -375,18 +412,28 @@ class Paginator:
             try:
                 title = i.title
                 if title == Embed.Empty:
-                    select_options.append(create_select_option(f"{pageNum}: Title not found", value=f"{pageNum}"))
+                    select_options.append(
+                        create_select_option(
+                            f"{pageNum}: Title not found", value=f"{pageNum}"
+                        )
+                    )
                 else:
                     title = (title[:93] + "...") if len(title) > 96 else title
-                    select_options.append(create_select_option(f"{pageNum}: {title}", value=f"{pageNum}"))
+                    select_options.append(
+                        create_select_option(f"{pageNum}: {title}", value=f"{pageNum}")
+                    )
             except Exception:
-                select_options.append(create_select_option(f"{pageNum}: Title not found", value=f"{pageNum}"))
+                select_options.append(
+                    create_select_option(
+                        f"{pageNum}: Title not found", value=f"{pageNum}"
+                    )
+                )
         self.useIndexButton = False if not self.useButtons else self.useIndexButton
         if self.useLinkButton:
             linkButton = create_button(
                 style=5,
                 label=self.linkLabel[0] if self.multiLabel else self.linkLabel,
-                url=self.linkURL[0] if self.multiURL else self.linkURL
+                url=self.linkURL[0] if self.multiURL else self.linkURL,
             )
             if len(controlButtons) < 5:
                 controlButtons.append(linkButton)
@@ -397,7 +444,7 @@ class Paginator:
                 style=self.customButtonStyle,
                 label=self.customButtonLabel,
                 disabled=True,
-                emoji=self.customButtonEmoji
+                emoji=self.customButtonEmoji,
             )
             if len(controlButtons) < 5:
                 controlButtons.append(customButton)
@@ -411,7 +458,7 @@ class Paginator:
                 custom_id="select",
                 placeholder=f"{self.indexLabel} {self.index}/{self.top}",
                 min_values=1,
-                max_values=1
+                max_values=1,
             )
             selectControls = create_actionrow(select)
             components.append(selectControls)
@@ -421,7 +468,9 @@ class Paginator:
 
 
 class TimedOut:
-    def __init__(self, ctx, buttonContext, timeTaken, lastEmbed, successfulUsers, failedUsers):
+    def __init__(
+        self, ctx, buttonContext, timeTaken, lastEmbed, successfulUsers, failedUsers
+    ):
         self.ctx = ctx
         self.buttonContext = buttonContext
         self.timeTaken = timeTaken
