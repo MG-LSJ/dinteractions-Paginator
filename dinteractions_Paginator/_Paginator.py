@@ -6,8 +6,7 @@ from discord import Embed, Emoji, Member, PartialEmoji, Role, TextChannel, User
 from discord.abc import User as userUser
 from discord.ext import commands
 from discord.role import Role as roleRole
-from discord_slash import SlashContext
-from discord_slash.context import ComponentContext, MenuContext
+from discord_slash.context import ComponentContext, InteractionContext
 from discord_slash.model import ButtonStyle
 from discord_slash.utils.manage_components import (
     create_actionrow,
@@ -32,10 +31,8 @@ class Paginator:
         self,
         bot: commands.Bot,
         ctx: Union[
-            SlashContext,
+            InteractionContext,
             commands.Context,
-            ComponentContext,
-            MenuContext,
             TextChannel,
             User,
             Member,
@@ -51,6 +48,7 @@ class Paginator:
                 List[Union[User, Role]],
             ]
         ] = None,
+        dm: Optional[bool] = False,
         timeout: Optional[int] = None,
         disableAfterTimeout: Optional[bool] = True,
         deleteAfterTimeout: Optional[bool] = False,
@@ -86,6 +84,7 @@ class Paginator:
         self.hidden = hidden
         self.authorOnly = authorOnly
         self.onlyFor = onlyFor
+        self.dm = dm
         self.timeout = timeout
         self.disableAfterTimeout = disableAfterTimeout
         self.deleteAfterTimeout = deleteAfterTimeout
@@ -130,17 +129,15 @@ class Paginator:
         if not isinstance(self.bot, commands.Bot):
             raise IncorrectDataType("bot", "commands.Bot", self.bot)
         if (
-            not isinstance(self.ctx, SlashContext)
+            not isinstance(self.ctx, InteractionContext)
             and not isinstance(self.ctx, commands.Context)
-            and not isinstance(self.ctx, ComponentContext)
-            and not isinstance(self.ctx, MenuContext)
             and not isinstance(self.ctx, TextChannel)
             and not isinstance(self.ctx, User)
             and not isinstance(self.ctx, Member)
         ):
             raise IncorrectDataType(
                 "ctx",
-                "SlashContext, commands.Context, ComponentContext, MenuContext, discord.TextChannel, discord.User,"
+                "InteractionContext, commands.Context, discord.TextChannel, discord.User,"
                 + " or discord.Member",
                 self.ctx,
             )
@@ -171,6 +168,8 @@ class Paginator:
                             "discord.User, Role, or list of discord.User/Role",
                             self.onlyFor,
                         )
+        if not isinstance(self.dm, bool):
+            raise IncorrectDataType("dm", "bool", self.dm)
         if not isinstance(self.timeout, int):
             if self.timeout is not None:
                 raise IncorrectDataType("timeout", "int", self.timeout)
@@ -296,18 +295,62 @@ class Paginator:
 
     async def run(self):
         try:
-            msg = await self.ctx.send(
-                content=self.content[0] if self.multiContent else self.content,
-                embed=self.pages[0],
-                components=self.components(),
-                hidden=self.hidden,
-            )
+            if self.dm:
+                if isinstance(self.ctx, InteractionContext) or isinstance(
+                    self.ctx, commands.Context
+                ):
+                    msg = await self.ctx.author.send(
+                        content=self.content[0] if self.multiContent else self.content,
+                        embed=self.pages[0],
+                        components=self.components(),
+                        hidden=self.hidden,
+                    )
+                    await self.ctx.send("Check your DMs!", hidden=True)
+                elif isinstance(self.ctx, userUser):
+                    msg = await self.ctx.send(
+                        content=self.content[0] if self.multiContent else self.content,
+                        embed=self.pages[0],
+                        components=self.components(),
+                        hidden=self.hidden,
+                    )
+                else:
+                    IncorrectDataType(
+                        "ctx", "InteractionContext or commands.Context", self.ctx
+                    )
+            else:
+                msg = await self.ctx.send(
+                    content=self.content[0] if self.multiContent else self.content,
+                    embed=self.pages[0],
+                    components=self.components(),
+                    hidden=self.hidden,
+                )
         except TypeError:
-            msg = await self.ctx.send(
-                content=self.content[0] if self.multiContent else self.content,
-                embed=self.pages[0],
-                components=self.components(),
-            )
+            if self.dm:
+                if isinstance(self.ctx, InteractionContext) or isinstance(
+                    self.ctx, commands.Context
+                ):
+                    msg = await self.ctx.author.send(
+                        content=self.content[0] if self.multiContent else self.content,
+                        embed=self.pages[0],
+                        components=self.components(),
+                    )
+                    await self.ctx.send("Check your DMs!", hidden=True)
+                elif isinstance(self.ctx, userUser):
+                    msg = await self.ctx.send(
+                        content=self.content[0] if self.multiContent else self.content,
+                        embed=self.pages[0],
+                        components=self.components(),
+                    )
+                else:
+                    IncorrectDataType(
+                        "ctx", "InteractionContext or commands.Context", self.ctx
+                    )
+            else:
+                msg = await self.ctx.send(
+                    content=self.content[0] if self.multiContent else self.content,
+                    embed=self.pages[0],
+                    components=self.components(),
+                )
         # handling the interaction
         tmt = True  # stop listening when timeout expires
         start = time()
