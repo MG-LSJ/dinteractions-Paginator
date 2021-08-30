@@ -4,7 +4,7 @@ from typing import List, Optional, Union
 
 from discord import Embed, Emoji, Member, PartialEmoji, Role, TextChannel, User
 from discord.abc import User as userUser
-from discord.ext import commands
+from discord.ext.commands import AutoShardedBot, Bot, Context
 from discord.role import Role as roleRole
 from discord_slash.context import ComponentContext, InteractionContext
 from discord_slash.model import ButtonStyle
@@ -18,21 +18,39 @@ from discord_slash.utils.manage_components import (
 
 from .errors import (
     BadButtons,
-    BadContent,
-    BadEmoji,
     BadOnly,
     IncorrectDataType,
     TooManyButtons,
 )
 
 
+class TimedOut:
+    def __init__(
+        self,
+        ctx,
+        buttonContext,
+        timeTaken,
+        lastContent,
+        lastEmbed,
+        successfulUsers,
+        failedUsers,
+    ):
+        self.ctx = ctx
+        self.buttonContext = buttonContext
+        self.timeTaken = timeTaken
+        self.lastContent = lastContent
+        self.lastEmbed = lastEmbed
+        self.successfulUsers = successfulUsers
+        self.failedUsers = failedUsers
+
+
 class Paginator:
     def __init__(
         self,
-        bot: commands.Bot,
+        bot: Union[AutoShardedBot, Bot],
         ctx: Union[
             InteractionContext,
-            commands.Context,
+            Context,
             TextChannel,
             User,
             Member,
@@ -76,7 +94,7 @@ class Paginator:
         nextStyle: Optional[Union[ButtonStyle, int]] = 1,
         lastStyle: Optional[Union[ButtonStyle, int]] = 1,
         customButtonStyle: Optional[Union[ButtonStyle, int]] = 2,
-    ):
+    ) -> TimedOut:
         self.bot = bot
         self.ctx = ctx
         self.pages = pages
@@ -93,24 +111,12 @@ class Paginator:
         self.useIndexButton = useIndexButton
         self.useLinkButton = useLinkButton
         self.useFirstLast = useFirstLast
-        self.firstLabel = firstLabel
-        self.prevLabel = prevLabel
-        self.indexLabel = indexLabel
-        self.nextLabel = nextLabel
-        self.lastLabel = lastLabel
-        self.linkLabel = linkLabel
-        self.linkURL = linkURL
+        self.labels = [firstLabel, prevLabel, indexLabel, nextLabel, lastLabel]
+        self.link = [linkLabel, linkURL]
         self.customButtonLabel = customButtonLabel
-        self.firstEmoji = firstEmoji
-        self.prevEmoji = prevEmoji
-        self.nextEmoji = nextEmoji
-        self.lastEmoji = lastEmoji
+        self.emojis = [firstEmoji, prevEmoji, nextEmoji, lastEmoji]
         self.customButtonEmoji = customButtonEmoji
-        self.firstStyle = firstStyle
-        self.prevStyle = prevStyle
-        self.indexStyle = indexStyle
-        self.nextStyle = nextStyle
-        self.lastStyle = lastStyle
+        self.styles = [firstStyle, prevStyle, indexStyle, nextStyle, lastStyle]
         self.customButtonStyle = customButtonStyle
 
         self.top = len(self.pages)  # limit of the paginator
@@ -124,157 +130,94 @@ class Paginator:
             self.successfulUsers = [ctx]
         self.failedUsers = []
 
+        self.index = 1
+
         # ERROR HANDLING
 
-        if not isinstance(self.bot, commands.Bot):
-            raise IncorrectDataType("bot", "commands.Bot", self.bot)
-        if (
-            not isinstance(self.ctx, InteractionContext)
-            and not isinstance(self.ctx, commands.Context)
-            and not isinstance(self.ctx, TextChannel)
-            and not isinstance(self.ctx, User)
-            and not isinstance(self.ctx, Member)
-        ):
-            raise IncorrectDataType(
-                "ctx",
-                "InteractionContext, commands.Context, discord.TextChannel, discord.User,"
-                + " or discord.Member",
-                self.ctx,
+        self.incdata(
+            "bot",
+            self.bot,
+            (AutoShardedBot, Bot),
+            "commands.Bot or commands.AutoShardedBot",
+        )
+        self.incdata(
+            "ctx",
+            self.ctx,
+            (InteractionContext, Context, TextChannel, User, Member),
+            "InteractionContext, commands.Context, discord.TextChannel, discord.User, or discord.Member",
+        )
+        self.incdata(
+            "content", self.content, (list, str, type(None)), "str or list(str)"
+        )
+        self.incdata("hidden", self.hidden, bool, "bool")
+        self.incdata("authorOnly", self.authorOnly, bool, "bool")
+        self.incdata(
+            "onlyFor",
+            self.onlyFor,
+            (User, Role, list, type(None)),
+            "discord.User/Role, or list(discord.User/Role)",
+        )
+        self.incdata("dm", self.dm, bool, "bool")
+        self.incdata("timeout", self.timeout, (int, type(None)), "int")
+        bools = {
+            "disableAfterTimeout": self.disableAfterTimeout,
+            "deleteAfterTimeout": self.deleteAfterTimeout,
+            "useSelect": self.useSelect,
+            "useLinkButton": self.useLinkButton,
+        }
+        for b in bools:
+            self.incdata(
+                b,
+                bools[b],
+                bool,
+                "bool",
             )
-        if isinstance(self.content, list):
-            if len(self.content) < self.top:
-                self.content = self.content[0]
-                if not isinstance(self.content, str):
-                    raise BadContent(self.content)
-            else:
-                self.content = self.content[: self.top]
-                for s in self.content:
-                    if not isinstance(s, str):
-                        raise BadContent(self.content)
-                self.multiContent = True
-        elif not isinstance(self.content, str):
-            if self.content is not None:
-                raise BadContent(self.content)
-        if not isinstance(self.hidden, bool):
-            raise IncorrectDataType("hidden", "bool", self.hidden)
-        if not isinstance(self.authorOnly, bool):
-            raise IncorrectDataType("authorOnly", "bool", self.authorOnly)
-        if not isinstance(self.onlyFor, User):
-            if not isinstance(self.onlyFor, Role):
-                if not isinstance(self.onlyFor, list):
-                    if self.onlyFor is not None:
-                        raise IncorrectDataType(
-                            "onlyFor",
-                            "discord.User, Role, or list of discord.User/Role",
-                            self.onlyFor,
-                        )
-        if not isinstance(self.dm, bool):
-            raise IncorrectDataType("dm", "bool", self.dm)
-        if not isinstance(self.timeout, int):
-            if self.timeout is not None:
-                raise IncorrectDataType("timeout", "int", self.timeout)
-        if not isinstance(self.disableAfterTimeout, bool):
-            raise IncorrectDataType(
-                "disableAfterTimeout", "bool", self.disableAfterTimeout
+        self.incdata("useIndexButton", self.useIndexButton, (bool, type(None)), "bool")
+        labels = {
+            "firstLabel": firstLabel,
+            "prevLabel": prevLabel,
+            "indexLabel": indexLabel,
+            "nextLabel": nextLabel,
+            "lastLabel": lastLabel,
+            "linkLabel": linkLabel,
+            "linkURL": linkURL,
+        }
+        for label in labels:
+            self.incdata(
+                label,
+                labels[label],
+                str,
+                "str",
             )
-        if not isinstance(self.deleteAfterTimeout, bool):
-            raise IncorrectDataType(
-                "deleteAfterTimeout", "bool", self.deleteAfterTimeout
-            )
-        if not isinstance(self.useSelect, bool):
-            raise IncorrectDataType("useSelect", "bool", self.useSelect)
-        if not isinstance(self.useButtons, bool):
-            raise IncorrectDataType("useButtons", "bool", self.useButtons)
-        if (
-            not isinstance(self.useIndexButton, bool)
-            and self.useIndexButton is not None
-        ):
-            raise IncorrectDataType("useIndexButton", "bool", self.useIndexButton)
-        if not isinstance(self.useLinkButton, bool):
-            raise IncorrectDataType("useLinkButton", "bool", self.useLinkButton)
-        if not isinstance(self.firstLabel, str):
-            raise IncorrectDataType("firstLabel", "str", self.firstLabel)
-        if not isinstance(self.prevLabel, str):
-            raise IncorrectDataType("prevLabel", "str", self.prevLabel)
-        if not isinstance(self.nextLabel, str):
-            raise IncorrectDataType("nextLabel", "str", self.nextLabel)
-        if not isinstance(self.lastLabel, str):
-            raise IncorrectDataType("lastLabel", "str", self.lastLabel)
-
-        if isinstance(self.linkLabel, list):
-            if len(self.linkLabel) < self.top:
-                self.linkLabel = self.linkLabel[0]
-                if not isinstance(self.linkLabel, str):
-                    raise IncorrectDataType(
-                        "linkLabel", "str or list of str", self.linkLabel
-                    )
-            else:
-                self.linkLabel = self.linkLabel[: self.top]
-                for s in self.linkLabel:
-                    if not isinstance(s, str):
-                        raise IncorrectDataType(
-                            "linkLabel", "str or list of str", self.linkLabel
-                        )
-                self.multiLabel = True
-        elif not isinstance(self.linkLabel, str):
-            raise IncorrectDataType("linkLabel", "str or list of str", self.linkLabel)
-        if isinstance(self.linkURL, list):
-            if len(self.linkURL) < self.top:
-                self.linkURL = self.linkURL[0]
-                if not isinstance(self.linkURL, str):
-                    raise IncorrectDataType(
-                        "linkURL", "str or list of str", self.linkURL
-                    )
-            else:
-                self.linkURL = self.linkURL[: self.top]
-                for s in self.linkURL:
-                    if not isinstance(s, str):
-                        raise IncorrectDataType(
-                            "linkURL", "str or list of str", self.linkURL
-                        )
-                self.multiURL = True
-        elif not isinstance(self.linkURL, str):
-            raise IncorrectDataType("linkURL", "str or list of str", self.linkURL)
-        if not isinstance(self.customButtonLabel, str):
-            if self.customButtonLabel is not None:
-                raise IncorrectDataType(
-                    "customButtonLabel", "str", self.customButtonLabel
-                )
-        emojis = [self.firstEmoji, self.prevEmoji, self.nextEmoji, self.lastEmoji]
+        self.incdata(
+            "customButtonLabel", self.customButtonLabel, (str, type(None)), "str"
+        )
+        emojis = {
+            "firstEmoji": firstEmoji,
+            "prevEmoji": prevEmoji,
+            "nextEmoji": nextEmoji,
+            "lastEmoji": lastEmoji,
+        }
         for emoji in emojis:
-            num = emojis.index(emoji) + 1
-            if (
-                not isinstance(emoji, Emoji)
-                and not isinstance(emoji, PartialEmoji)
-                and not isinstance(emoji, dict)
-                and not isinstance(emoji, str)
-            ):
-                raise BadEmoji(num)
-        if not isinstance(self.indexStyle, ButtonStyle) and not isinstance(
-            self.indexStyle, int
-        ):
-            raise IncorrectDataType("indexStyle", "ButtonStyle or int", self.indexStyle)
-        if not isinstance(self.firstStyle, ButtonStyle) and not isinstance(
-            self.firstStyle, int
-        ):
-            raise IncorrectDataType("firstStyle", "ButtonStyle or int", self.firstStyle)
-        if not isinstance(self.prevStyle, ButtonStyle) and not isinstance(
-            self.prevStyle, int
-        ):
-            raise IncorrectDataType("prevStyle", "ButtonStyle or int", self.prevStyle)
-        if not isinstance(self.nextStyle, ButtonStyle) and not isinstance(
-            self.nextStyle, int
-        ):
-            raise IncorrectDataType("nextStyle", "ButtonStyle or int", self.nextStyle)
-        if not isinstance(self.lastStyle, ButtonStyle) and not isinstance(
-            self.lastStyle, int
-        ):
-            raise IncorrectDataType("lastStyle", "ButtonStyle or int", self.lastStyle)
-        if not isinstance(self.customButtonStyle, ButtonStyle) and not isinstance(
-            self.customButtonStyle, int
-        ):
-            raise IncorrectDataType(
-                "customButtonStyle", "ButtonStyle or int", self.customButtonStyle
+            self.incdata(
+                emoji,
+                emojis[emoji],
+                (Emoji, PartialEmoji, dict, str),
+                "Emoji, PartialEmoji, dict, or str",
+            )
+        styles = {
+            "firstStyle": firstStyle,
+            "prevStyle": prevStyle,
+            "indexStyle": indexStyle,
+            "nextStyle": nextStyle,
+            "lastStyle": lastStyle,
+        }
+        for style in styles:
+            self.incdata(
+                style,
+                styles[style],
+                (ButtonStyle, int),
+                "ButtonStyle or int",
             )
         if self.useIndexButton and not self.useButtons:
             BadButtons("Index button cannot be used with useButtons=False!")
@@ -291,13 +234,11 @@ class Paginator:
             if self.useIndexButton is None:
                 self.useIndexButton = True
 
-        self.index = 1
-
-    async def run(self):
+    async def run(self) -> TimedOut:
         try:
             if self.dm:
                 if isinstance(self.ctx, InteractionContext) or isinstance(
-                    self.ctx, commands.Context
+                    self.ctx, Context
                 ):
                     msg = await self.ctx.author.send(
                         content=self.content[0] if self.multiContent else self.content,
@@ -315,7 +256,9 @@ class Paginator:
                     )
                 else:
                     IncorrectDataType(
-                        "ctx", "InteractionContext or commands.Context", self.ctx
+                        "ctx",
+                        "InteractionContext or commands.Context for dm=True",
+                        self.ctx,
                     )
             else:
                 msg = await self.ctx.send(
@@ -327,7 +270,7 @@ class Paginator:
         except TypeError:
             if self.dm:
                 if isinstance(self.ctx, InteractionContext) or isinstance(
-                    self.ctx, commands.Context
+                    self.ctx, Context
                 ):
                     msg = await self.ctx.author.send(
                         content=self.content[0] if self.multiContent else self.content,
@@ -395,17 +338,23 @@ class Paginator:
                             component["disabled"] = True
                     await msg.edit(components=components)
                 timeTaken = round(end - start)
+                lastContent = (
+                    self.content
+                    if isinstance(self.content, (str, type(None)))
+                    else self.content[self.index - 1]
+                )
                 lastEmbed = self.pages[self.index - 1]
                 return TimedOut(
                     self.ctx,
                     buttonContext,
                     timeTaken,
+                    lastContent,
                     lastEmbed,
                     self.successfulUsers,
                     self.failedUsers,
                 )
 
-    def check(self, buttonContext):
+    def check(self, buttonContext) -> bool:
         if self.authorOnly and buttonContext.author.id != self.ctx.author.id:
             if buttonContext.author not in self.failedUsers:
                 self.failedUsers.append(buttonContext.author)
@@ -429,31 +378,31 @@ class Paginator:
 
         return True
 
-    def components(self):
+    def components(self) -> list:
         disableLeft = self.index == 1
         disableRight = self.index == self.top
         controlButtons = [
             # Previous Button
             create_button(
-                style=self.prevStyle,
-                label=self.prevLabel,
+                style=self.styles[1],
+                label=self.labels[1],
                 custom_id="prev",
                 disabled=disableLeft,
-                emoji=self.prevEmoji,
+                emoji=self.emojis[1],
             ),
             # Index
             create_button(
-                style=self.indexStyle,
-                label=f"{self.indexLabel} {self.index}/{self.top}",
+                style=self.styles[2],
+                label=f"{self.labels[2]} {self.index}/{self.top}",
                 disabled=True,
             ),
             # Next Button
             create_button(
-                style=self.nextStyle,
-                label=self.nextLabel,
+                style=self.styles[3],
+                label=self.labels[3],
                 custom_id="next",
                 disabled=disableRight,
-                emoji=self.nextEmoji,
+                emoji=self.emojis[2],
             ),
         ]
         if not self.useIndexButton:
@@ -462,20 +411,20 @@ class Paginator:
             controlButtons.insert(
                 0,
                 create_button(
-                    style=self.firstStyle,
-                    label=self.firstLabel,
+                    style=self.styles[0],
+                    label=self.labels[0],
                     custom_id="first",
                     disabled=disableLeft,
-                    emoji=self.firstEmoji,
+                    emoji=self.emojis[0],
                 ),
             )
             controlButtons.append(
                 create_button(
-                    style=self.lastStyle,
-                    label=self.lastLabel,
+                    style=self.styles[4],
+                    label=self.labels[4],
                     custom_id="last",
                     disabled=disableRight,
-                    emoji=self.lastEmoji,
+                    emoji=self.emojis[3],
                 )
             )
         select_options = []
@@ -504,8 +453,8 @@ class Paginator:
         if self.useLinkButton:
             linkButton = create_button(
                 style=5,
-                label=self.linkLabel[0] if self.multiLabel else self.linkLabel,
-                url=self.linkURL[0] if self.multiURL else self.linkURL,
+                label=self.links[0][0] if self.multiLabel else self.links[0],
+                url=self.links[1][0] if self.multiURL else self.links[1],
             )
             if len(controlButtons) < 5:
                 controlButtons.append(linkButton)
@@ -528,7 +477,7 @@ class Paginator:
             select = create_select(
                 options=select_options,
                 custom_id="select",
-                placeholder=f"{self.indexLabel} {self.index}/{self.top}",
+                placeholder=f"{self.labels[2]} {self.index}/{self.top}",
                 min_values=1,
                 max_values=1,
             )
@@ -538,14 +487,19 @@ class Paginator:
             components.append(buttonControls)
         return components
 
-
-class TimedOut:
-    def __init__(
-        self, ctx, buttonContext, timeTaken, lastEmbed, successfulUsers, failedUsers
-    ):
-        self.ctx = ctx
-        self.buttonContext = buttonContext
-        self.timeTaken = timeTaken
-        self.lastEmbed = lastEmbed
-        self.successfulUsers = successfulUsers
-        self.failedUsers = failedUsers
+    def incdata(self, name, arg, sup, supstr) -> None:
+        if isinstance(arg, tuple) and isinstance(sup, tuple):
+            for a in arg:
+                if isinstance(a, sup):
+                    return
+                else:
+                    raise IncorrectDataType(name[arg.index(a)], supstr, a)
+        elif isinstance(arg, tuple):
+            for a in arg:
+                if isinstance(a, sup):
+                    return
+                else:
+                    raise IncorrectDataType(name[arg.index(a)], supstr, a)
+        else:
+            if not isinstance(arg, sup):
+                raise IncorrectDataType(name, supstr, arg)
