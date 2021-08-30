@@ -5,28 +5,11 @@ class PaginatorError(Exception):
     """Base class for exceptions"""
 
 
-class BadContent(PaginatorError):
-    def __init__(self, content):
-        super().__init__(f"Content must be a string or list of strings, not {type(content)}!")
-
-
 class IncorrectDataType(PaginatorError):
     def __init__(self, name, data, var):
-        super().__init__(f"Incorrect data type passed in for parameter {name}; should be {data}, not {var}!")
-
-
-class BadEmoji(PaginatorError):
-    def __init__(self, num):
-        name = "unknown"
-        if num == 1:
-            name = "firstEmoji"
-        if num == 2:
-            name = "prevEmoji"
-        if num == 3:
-            name = "nextEmoji"
-        if num == 4:
-            name = "lastEmoji"
-        super().__init__(f"{name} needs to be an emoji!")
+        super().__init__(
+            f"Incorrect data type passed in for parameter {name}; should be {data}, not {var}!"
+        )
 
 
 class TooManyButtons(PaginatorError):
@@ -47,4 +30,6 @@ class BadButtons(PaginatorWarning):
 class BadOnly(PaginatorWarning):
     def __init__(self):
         self.logger = getLogger("dinteractions_Paginator")
-        self.logger.warning("authorOnly and onlyFor can not both be defined! Using onlyFor instead.")
+        self.logger.warning(
+            "authorOnly and onlyFor can not both be defined! Using onlyFor instead."
+        )
