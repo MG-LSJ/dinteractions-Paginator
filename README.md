@@ -41,10 +41,8 @@ pip install -U dinteractions-Paginator
 These simple examples show how to easily create interactive, multiple page embeds that anyone can interact with that automatically deactivate after 60 seconds of inactivity:
 
 ### <a name="gif"></a> Example GIF:
-<div align="left">
-    Paginator with select:<br>
-    <img src="https://cdn.discordapp.com/attachments/871853650568417310/873731782514728980/o8YSi1nzvT.gif" height="400">
-</div>
+Paginator with select:<br>
+<img src="https://cdn.discordapp.com/attachments/871853650568417310/882017626266697758/MDTxhoscwG.gif">
 
 ### <a name="slash"></a> Slash command:
 ```py
@@ -179,6 +177,7 @@ bot.run("token")
 - `ctx` - `Union[commands.Context, SlashContext]`: The original context
 - `buttonContext` - `ComponentContext`: The context for the paginator's components
 - `timeTaken` - `int`: How long in seconds that user(s) used the paginator before the timeout
+- `lastContent` - `str`: The last content that the paginator stopped at after timeout
 - `lastEmbed` - `discord.Embed`: The last embed that the paginator stopped at after timeout
 - `successfulUsers` - `List[discord.User]`: Users that successfully used the paginator, the first user is the invoker
 - `failedUsers` - `List[discord.User]`: Users that failed to use the paginator
