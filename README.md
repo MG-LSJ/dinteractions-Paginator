@@ -140,6 +140,7 @@ bot.run("token")
 - `useIndexButton` - `Optional[bool]`: uses the index button, default is `False` and stays `False` if `useButtons` is also `False`
 - `useLinkButton` - `Optional[bool]`: uses the link button
 - `useFirstLast` - `Optional[bool]`: uses the first and last buttons, default `True`
+- `useOverflow` - `Optional[bool]`: uses the overflow action row if there are too many buttons, default `True`
 
 #### <a name="labels"></a> Labels:
 - `firstLabel` - `Optional[str]`: The label of the button used to go to the first page, defaults to `""`
