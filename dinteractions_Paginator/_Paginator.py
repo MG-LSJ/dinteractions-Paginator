@@ -68,7 +68,6 @@ class Paginator:
             ]
         ] = None,
         dm: Optional[bool] = False,
-        useOverflow: Optional[bool] = True,
         timeout: Optional[int] = None,
         disableAfterTimeout: Optional[bool] = True,
         deleteAfterTimeout: Optional[bool] = False,
@@ -77,6 +76,7 @@ class Paginator:
         useIndexButton: Optional[bool] = None,
         useLinkButton: Optional[bool] = False,
         useFirstLast: Optional[bool] = True,
+        useOverflow: Optional[bool] = True,
         firstLabel: Optional[str] = "",
         prevLabel: Optional[str] = "",
         indexLabel: Optional[str] = "Page",
