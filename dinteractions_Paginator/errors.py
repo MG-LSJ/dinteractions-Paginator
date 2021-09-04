@@ -14,7 +14,9 @@ class IncorrectDataType(PaginatorError):
 
 class TooManyButtons(PaginatorError):
     def __init__(self):
-        super().__init__("Too many buttons! Please remove some!")
+        super().__init__(
+            "Too many buttons! Please remove some, or utilise the overflow row!"
+        )
 
 
 class PaginatorWarning(Warning):
