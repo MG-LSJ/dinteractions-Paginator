@@ -35,7 +35,7 @@ pip install -U dinteractions-Paginator
 
 ### <a name="dep"></a> Dependencies
 - [discord.py](https://pypi.org/project/discord.py/) (version 1.7.3)
-- [discord-interactions](https://pypi.org/project/discord-interactions/) (version 3.0.1 - 3.0.2)
+- [discord-py-interactions](https://pypi.org/project/discord-py-interactions/) (version 3.0.1 - 3.0.2)
 
 ## <a name="examples"></a> Examples:
 These simple examples show how to easily create interactive, multiple page embeds that anyone can interact with that automatically deactivate after 60 seconds of inactivity:
@@ -139,8 +139,10 @@ bot.run("token")
 - `useSelect` - `Optional[bool]`: uses a select, default is `True`
 - `useIndexButton` - `Optional[bool]`: uses the index button, default is `False` and stays `False` if `useButtons` is also `False`
 - `useLinkButton` - `Optional[bool]`: uses the link button
+- `useQuitButton` - `Optional[bool]`: quit button to end the paginator, default `False`
 - `useFirstLast` - `Optional[bool]`: uses the first and last buttons, default `True`
 - `useOverflow` - `Optional[bool]`: uses the overflow action row if there are too many buttons, default `True`
+- `useNotYours` - `Optional[bool]`: sends an ephemeral (hidden) message if the paginator is not yours (see authorOnly or onlyFor), default `True`
 
 #### <a name="labels"></a> Labels:
 - `firstLabel` - `Optional[str]`: The label of the button used to go to the first page, defaults to `""`
@@ -150,14 +152,16 @@ bot.run("token")
 - `lastLabel` - `Optional[str]`: The label of the button used to go to the last page, defaults to `""`
 - `linkLabel` - `Optional[Union[str, List[str]]]`: The label for the link button
 - `linkURL` - `Optional[Union[str, List[str]]]`: The URL(s) for the link button
-- `customButtonLabel` = `Optional[str]`: The label of a custom disabled button, default `None`
+- `customButtonLabel` - `Optional[str]`: The label of a custom disabled button, default `None`
+- `quitButtonLabel` - `Optional[str]`: The label of the quit button, default `"Quit"`
 
 #### <a name="emojis"></a> Emojis:
-- `firstEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, bytes]`: emoji of the button used to go to the first page, defaults to `"⏮️"`
-- `prevEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, bytes]`: emoji of the button used to go to the previous page, defaults to `"◀"`
-- `nextEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, bytes]`: emoji of the button used to go to the next page, defaults to `"▶"`
-- `lastEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, bytes]`: emoji of the button used to go to the last page, defaults to `"⏭️"`
-- `customButtonEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, bytes]`: emoji of the custom disabled button, defaults to `None`
+- `firstEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, str]`: emoji of the button used to go to the first page, defaults to `"⏮️"`
+- `prevEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, str]`: emoji of the button used to go to the previous page, defaults to `"◀"`
+- `nextEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, str]`: emoji of the button used to go to the next page, defaults to `"▶"`
+- `lastEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, str]`: emoji of the button used to go to the last page, defaults to `"⏭️"`
+- `customButtonEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, str]`: emoji of the custom disabled button, defaults to `None`
+- `quitButtonEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, str]`: emoji of the quit button, defaults to `None`
 
 #### <a name="styles"></a> Styles (the colo[u]r of the buttons):
 - `firstStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the first button, defaults to `1` (`ButtonStyle.blue`)
@@ -165,7 +169,8 @@ bot.run("token")
 - `indexStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the index button, defaults to `3` (`ButtonStyle.green`)
 - `nextStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the next button, defaults to `1` (`ButtonStyle.blue`)
 - `lastStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the last button, defaults to `1` (`ButtonStyle.blue`)
-- `customButtonStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the last button, defaults to `2` (`ButtonStyle.gray`)
+- `customButtonStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the custom disabled button, defaults to `2` (`ButtonStyle.gray`)
+- `quitButtonStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the quit button, defaults to `4` (`ButtonStyle.red`)
 
 ### <a name="returns"></a> Returns
 [*class* TimedOut](#timed)
