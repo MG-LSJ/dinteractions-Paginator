@@ -42,7 +42,7 @@ These simple examples show how to easily create interactive, multiple page embed
 
 ### <a name="gif"></a> Example GIF:
 Paginator with select:<br>
-<img src="https://cdn.discordapp.com/attachments/871853650568417310/882017626266697758/MDTxhoscwG.gif">
+<img src="https://cdn.discordapp.com/attachments/871853650568417310/882017626266697758/MDTxhoscwG.gif"></img>
 
 ### <a name="slash"></a> Slash command:
 ```py
@@ -113,11 +113,16 @@ bot.run("token")
   - [Emojis](#emojis)
   - [Styles](#styles)
 - [Returns](#returns)
+- [customActionRow](#howtocustom)
+  - [Example code](#customcode)
+  - [Example GIF](#customgif)
+  - [Template](#customtemplate)
 
 ### <a name="req"></a> Required:
 - `bot` - `commands.Bot`: The bot variable, `commands.Bot` is required
 - `ctx` - `Union[SlashContext, commands.Context, ComponentContext, MenuContext, discord.TextChannel, discord.User, discord.Member]`: The context of a command.
 <br>NOTE: if one of the latter 3 are used, there will always be a `This interaction failed` even though it was a success, due to no context to respond to
+
 - `pages` - `List[discord.Embed]`: A list of embeds to be paginated
 
 ------------------------------
@@ -128,6 +133,7 @@ bot.run("token")
 - `authorOnly` - `Optional[bool]`: if you want the paginator to work for the author only, default is `False`
 - `onlyFor` - `Optional[Union[discord.User, discord.Role, List[Union[discord.User, discord.Role]]]]`: components only for specified user(s) or role(s)
 - `dm` - `Optional[bool]`: if you want the paginator to be DM'ed, default `False`
+- `customActionRow` - `Optional[List[Union[dict, Callable]]]`: a custom action row, see [this](#howtocustom) for more info, defaults to `None`
 
 #### <a name="time"></a> Time:
 - `timeout` - `Optional[int]`: deactivates paginator after inactivity if enabled, defaults to `None` (meaning no timeout)
@@ -174,6 +180,74 @@ bot.run("token")
 
 ### <a name="returns"></a> Returns
 [*class* TimedOut](#timed)
+
+
+### <a name="howtocustom"></a> More info on `customActionRow`:
+
+You can define your own custom action row, with its own code!
+
+#### <a name="customcode"></a> Example code:
+
+```py
+@slash.slash(name="custom-action-row")
+async def _custom_action_row(ctx: SlashContext):
+    # Embeds:
+    pages = [
+        discord.Embed(title="1"),
+        discord.Embed(title="2"),
+        discord.Embed(title="3"),
+        discord.Embed(title="4"),
+        discord.Embed(title="5"),
+    ]
+
+    # Action row:
+    buttons = [
+        create_button(style=3, label="A Green Button"),
+    ]
+    custom_action_row = create_actionrow(*buttons)
+
+    # Function:
+    async def custom_function(self, button_ctx):
+        await button_ctx.send("test", hidden=True)
+        await self.ctx.send("lol")
+
+    # Paginator:
+    await Paginator(
+        bot,
+        ctx,
+        pages,
+        timeout=60,
+        customActionRow=[
+            custom_action_row,
+            custom_function,
+        ],  # Note that custom_function is not called
+    ).run()
+```
+The code above runs a normal paginator, with 1 extra action row at the bottom!
+
+#### <a name="customgif"></a> Example GIF:
+
+<img src="https://cdn.discordapp.com/attachments/871853650568417310/884243305947340820/pDQZld6v19.gif"></img>
+
+You can access all of the attributes of [*class* Paginator](#paginator) with `self`, such as the original command's context (`self.ctx`), the bot variable (`self.bot`), and other things that you passed into it!
+
+#### <a name="customtemplate"></a> Template:
+
+```py
+buttons = [
+    create_button(style=3, label="A Green Button"),
+    ... # Your buttons
+]
+custom_action_row = create_actionrow(*buttons)
+
+# Function:
+async def custom_function(self, button_ctx):
+    pass  # Your code for the action row here
+    # You could check for each button and decide
+    # what to do
+
+await Paginator(customActionRow=[custom_action_row, custom_function])
+```
 
 ------------------------------
 
