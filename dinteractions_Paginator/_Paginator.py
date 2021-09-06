@@ -1,6 +1,6 @@
 from asyncio import TimeoutError, get_running_loop
 from time import time
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Callable
 from random import randint
 
 from discord import Embed, Emoji, Member, PartialEmoji, Role, TextChannel, User
@@ -28,13 +28,19 @@ from .errors import (
 class TimedOut:
     def __init__(
         self,
-        ctx,
-        buttonContext,
-        timeTaken,
-        lastContent,
-        lastEmbed,
-        successfulUsers,
-        failedUsers,
+        ctx: Union[
+            InteractionContext,
+            Context,
+            TextChannel,
+            User,
+            Member,
+        ],
+        buttonContext: ComponentContext,
+        timeTaken: int,
+        lastContent: str,
+        lastEmbed: Embed,
+        successfulUsers: List[User],
+        failedUsers: List[User],
     ):
         self.ctx = ctx
         self.buttonContext = buttonContext
@@ -68,6 +74,7 @@ class Paginator:
             ]
         ] = None,
         dm: Optional[bool] = False,
+        customActionRow: Optional[List[Union[dict, Callable]]] = None,
         timeout: Optional[int] = None,
         disableAfterTimeout: Optional[bool] = True,
         deleteAfterTimeout: Optional[bool] = False,
@@ -127,6 +134,7 @@ class Paginator:
         self.quit = [quitButtonStyle, quitButtonLabel, quitButtonEmoji]
         self.emojis = [firstEmoji, prevEmoji, nextEmoji, lastEmoji]
         self.styles = [firstStyle, prevStyle, indexStyle, nextStyle, lastStyle]
+        self.customActionRow = customActionRow
 
         self.top = len(self.pages)  # limit of the paginator
         self.multiContent = False
@@ -242,6 +250,13 @@ class Paginator:
                 (ButtonStyle, int),
                 "ButtonStyle or int",
             )
+        self.incdata(
+            "customActionRow",
+            self.customActionRow,
+            (list, type(None)),
+            "a list with the action row, then the function",
+        )
+
         if self.useIndexButton and not self.useButtons:
             BadButtons("Index button cannot be used with useButtons=False!")
             self.useIndexButton = False
@@ -268,16 +283,7 @@ class Paginator:
                     msg = await self.ctx.author.send(
                         content=self.content[0] if self.multiContent else self.content,
                         embed=self.pages[0],
-                        components=list(
-                            filter(
-                                None,
-                                [
-                                    self.select_row() if self.useSelect else None,
-                                    self.buttons_row() if self.useButtons else None,
-                                    self.overflow_row() if self.useOverflow else None,
-                                ],
-                            )
-                        ),
+                        components=self.components(),
                         hidden=self.hidden,
                     )
                     await self.ctx.send("Check your DMs!", hidden=True)
@@ -285,16 +291,7 @@ class Paginator:
                     msg = await self.ctx.send(
                         content=self.content[0] if self.multiContent else self.content,
                         embed=self.pages[0],
-                        components=list(
-                            filter(
-                                None,
-                                [
-                                    self.select_row() if self.useSelect else None,
-                                    self.buttons_row() if self.useButtons else None,
-                                    self.overflow_row() if self.useOverflow else None,
-                                ],
-                            )
-                        ),
+                        components=self.components(),
                         hidden=self.hidden,
                     )
                 else:
@@ -307,16 +304,7 @@ class Paginator:
                 msg = await self.ctx.send(
                     content=self.content[0] if self.multiContent else self.content,
                     embed=self.pages[0],
-                    components=list(
-                        filter(
-                            None,
-                            [
-                                self.select_row() if self.useSelect else None,
-                                self.buttons_row() if self.useButtons else None,
-                                self.overflow_row() if self.useOverflow else None,
-                            ],
-                        )
-                    ),
+                    components=self.components(),
                     hidden=self.hidden,
                 )
         except TypeError:
@@ -327,32 +315,14 @@ class Paginator:
                     msg = await self.ctx.author.send(
                         content=self.content[0] if self.multiContent else self.content,
                         embed=self.pages[0],
-                        components=list(
-                            filter(
-                                None,
-                                [
-                                    self.select_row() if self.useSelect else None,
-                                    self.buttons_row() if self.useButtons else None,
-                                    self.overflow_row() if self.useOverflow else None,
-                                ],
-                            )
-                        ),
+                        components=self.components(),
                     )
                     await self.ctx.send("Check your DMs!", hidden=True)
                 elif isinstance(self.ctx, userUser):
                     msg = await self.ctx.send(
                         content=self.content[0] if self.multiContent else self.content,
                         embed=self.pages[0],
-                        components=list(
-                            filter(
-                                None,
-                                [
-                                    self.select_row() if self.useSelect else None,
-                                    self.buttons_row() if self.useButtons else None,
-                                    self.overflow_row() if self.useOverflow else None,
-                                ],
-                            )
-                        ),
+                        components=self.components(),
                     )
                 else:
                     IncorrectDataType(
@@ -362,19 +332,9 @@ class Paginator:
                 msg = await self.ctx.send(
                     content=self.content[0] if self.multiContent else self.content,
                     embed=self.pages[0],
-                    components=list(
-                        filter(
-                            None,
-                            [
-                                self.select_row() if self.useSelect else None,
-                                self.buttons_row() if self.useButtons else None,
-                                self.overflow_row() if self.useOverflow else None,
-                            ],
-                        )
-                    ),
+                    components=self.components(),
                 )
-        # handling the interaction
-        tmt = True  # stop listening when timeout expires
+        tmt = True
         start = time()
         buttonContext = None
         while tmt:
@@ -382,16 +342,7 @@ class Paginator:
                 buttonContext: ComponentContext = await wait_for_component(
                     self.bot,
                     check=self.check,
-                    components=list(
-                        filter(
-                            None,
-                            [
-                                self.select_row() if self.useSelect else None,
-                                self.buttons_row() if self.useButtons else None,
-                                self.overflow_row() if self.useOverflow else None,
-                            ],
-                        )
-                    ),
+                    components=self.components(),
                     timeout=self.timeout,
                 )
                 if buttonContext.author not in self.successfulUsers:
@@ -412,16 +363,7 @@ class Paginator:
                     if self.deleteAfterTimeout and not self.hidden:
                         await buttonContext.origin_message.delete()
                     elif self.disableAfterTimeout and not self.hidden:
-                        components = list(
-                            filter(
-                                None,
-                                [
-                                    self.select_row() if self.useSelect else None,
-                                    self.buttons_row() if self.useButtons else None,
-                                    self.overflow_row() if self.useOverflow else None,
-                                ],
-                            )
-                        )
+                        components = self.components()
                         for row in components:
                             for component in row["components"]:
                                 component["disabled"] = True
@@ -442,22 +384,16 @@ class Paginator:
                         self.successfulUsers,
                         self.failedUsers,
                     )
+                elif self.customActionRow is not None:
+                    await self.customActionRow[1](self, buttonContext)
+                    continue
 
                 await buttonContext.edit_origin(
                     content=self.content[self.index - 1]
                     if self.multiContent
                     else self.content,
                     embed=self.pages[self.index - 1],
-                    components=list(
-                        filter(
-                            None,
-                            [
-                                self.select_row() if self.useSelect else None,
-                                self.buttons_row() if self.useButtons else None,
-                                self.overflow_row() if self.useOverflow else None,
-                            ],
-                        )
-                    ),
+                    components=self.components(),
                 )
             except TimeoutError:
                 tmt = False
@@ -465,16 +401,7 @@ class Paginator:
                 if self.deleteAfterTimeout and not self.hidden:
                     await msg.edit(components=None)
                 elif self.disableAfterTimeout and not self.hidden:
-                    components = list(
-                        filter(
-                            None,
-                            [
-                                self.select_row() if self.useSelect else None,
-                                self.buttons_row() if self.useButtons else None,
-                                self.overflow_row() if self.useOverflow else None,
-                            ],
-                        )
-                    )
+                    components = self.components()
                     for row in components:
                         for component in row["components"]:
                             component["disabled"] = True
@@ -597,6 +524,7 @@ class Paginator:
         if not self.useIndexButton:
             controlButtons.pop(1)
         if self.useFirstLast:
+            # First button
             controlButtons.insert(
                 0,
                 create_button(
@@ -607,6 +535,7 @@ class Paginator:
                     emoji=self.emojis[0],
                 ),
             )
+            # Last button
             controlButtons.append(
                 create_button(
                     style=self.styles[4],
@@ -682,6 +611,19 @@ class Paginator:
             if len(controlButtons) < 5:
                 controlButtons.append(quitButton)
         return None if controlButtons == [] else create_actionrow(*controlButtons)
+
+    def components(self) -> list:
+        return list(
+            filter(
+                None,
+                [
+                    self.select_row() if self.useSelect else None,
+                    self.buttons_row() if self.useButtons else None,
+                    self.overflow_row() if self.useOverflow else None,
+                    None if self.customActionRow is None else self.customActionRow[0],
+                ],
+            )
+        )
 
     def incdata(self, name, arg, sup, supstr) -> None:
         if isinstance(arg, tuple) and isinstance(sup, tuple):
