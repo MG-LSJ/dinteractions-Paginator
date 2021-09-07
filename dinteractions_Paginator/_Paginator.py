@@ -317,7 +317,10 @@ class Paginator:
                         embed=self.pages[0],
                         components=self.components(),
                     )
-                    await self.ctx.send("Check your DMs!", hidden=True)
+                    await self.ctx.send(
+                        "Check your DMs!",
+                        hidden=(True if isinstance(InteractionContext) else False),
+                    )
                 elif isinstance(self.ctx, userUser):
                     msg = await self.ctx.send(
                         content=self.content[0] if self.multiContent else self.content,
@@ -361,7 +364,7 @@ class Paginator:
                     tmt = False
                     end = time()
                     if self.deleteAfterTimeout and not self.hidden:
-                        await buttonContext.origin_message.delete()
+                        await buttonContext.edit_origin(components=None)
                     elif self.disableAfterTimeout and not self.hidden:
                         components = self.components()
                         for row in components:
@@ -423,7 +426,7 @@ class Paginator:
                     self.failedUsers,
                 )
 
-    def check(self, buttonContext) -> bool:
+    def check(self, buttonContext: ComponentContext) -> bool:
         if self.authorOnly and buttonContext.author.id != self.ctx.author.id:
             if buttonContext.author not in self.failedUsers:
                 if self.useNotYours:

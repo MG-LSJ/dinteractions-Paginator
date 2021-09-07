@@ -16,17 +16,26 @@ Unofficial discord-interactions multi-page embed handler
 - [TimedOut](#timed)
 - [Credits](#credits)
 
-### Join our [Discord server](https://discord.gg/UYCaSsMewk)!
-- Try out all the possible combinations of the paginator with `/example1` and `/example2`,
-- Ask some questions,
-- And give us feedback and suggestions!
-
 ## <a name="feats"></a> Features
 - Message per embed or persistent message
 - Index select that can be turned on/off
 - Select labels are generated based on embed's title
 - Index button that can be turned on/off
 - Ability to set the buttons to any emote, color or label
+
+### Join our [Discord server](https://discord.gg/UYCaSsMewk)!
+- Try out all the possible combinations of the paginator with `/example1` and `/example2`,
+- Ask some questions,
+- And give us feedback and suggestions!
+
+### Wanna contribute?
+- Make an issue to:
+    - say what feature you want to be added
+    - file a bug report
+- Make a pull request and:
+    - describe what you added/removed
+    - why you added/removed it
+- Make sure you use the issue/PR template!
 
 ## <a name="install"></a> Installation
 ```
@@ -234,19 +243,21 @@ You can access all of the attributes of [*class* Paginator](#paginator) with `se
 #### <a name="customtemplate"></a> Template:
 
 ```py
-buttons = [
-    create_button(style=3, label="A Green Button"),
-    ... # Your buttons
-]
-custom_action_row = create_actionrow(*buttons)
+# <-- Your decorator here
+    # ...
+    buttons = [
+        create_button(style=3, label="A Green Button"),
+        ... # Your buttons
+    ]
+    custom_action_row = create_actionrow(*buttons)
 
-# Function:
-async def custom_function(self, button_ctx):
-    pass  # Your code for the action row here
-    # You could check for each button and decide
-    # what to do
+    # Function:
+    async def custom_function(self, button_ctx):
+        pass  # Your code for the action row here
+        # You could check for each button and decide
+        # what to do
 
-await Paginator(customActionRow=[custom_action_row, custom_function])
+    await Paginator(..., customActionRow=[custom_action_row, custom_function]).run()
 ```
 
 ------------------------------
