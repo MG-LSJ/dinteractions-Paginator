@@ -4,7 +4,7 @@ with open("README.md","r",encoding="utf-8") as fh:
 
 setup(
     name="dinteractions_Paginator",
-    version="1.3.2",
+    version="1.3.3",
     description="Unofficial discord-interactions multi page embed handler",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -19,5 +19,5 @@ setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
     ],
-    install_requires=["discord-py-slash-command", "discord.py"],
+    install_requires=["discord-py-interactions", "discord.py"],
 )
