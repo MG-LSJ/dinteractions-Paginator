@@ -8,7 +8,7 @@ class PaginatorError(Exception):
 class IncorrectDataType(PaginatorError):
     def __init__(self, name, data, var):
         super().__init__(
-            f"Incorrect data type passed in for parameter {name}; should be {data}, not {var}!"
+            f"Incorrect data type passed in for parameter {name}; should be {data}, not {type(var)}!"
         )
 
 
