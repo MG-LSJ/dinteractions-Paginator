@@ -129,7 +129,7 @@ bot.run("token")
 
 ### <a name="req"></a> Required:
 - `bot` - `commands.Bot`: The bot variable, `commands.Bot` is required
-- `ctx` - `Union[SlashContext, commands.Context, ComponentContext, MenuContext, discord.TextChannel, discord.User, discord.Member]`: The context of a command.
+- `ctx` - `Union[SlashContext, commands.Context, ComponentContext, MenuContext, discord.channel.TextChannel, discord.User, discord.Member]`: The context of a command.
 <br>NOTE: if one of the latter 3 are used, there will always be a `This interaction failed` even though it was a success, due to no context to respond to
 
 - `pages` - `List[discord.Embed]`: A list of embeds to be paginated
