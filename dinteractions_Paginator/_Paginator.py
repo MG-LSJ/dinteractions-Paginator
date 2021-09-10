@@ -18,7 +18,7 @@ from discord_slash.utils.manage_components import (
     wait_for_component,
 )
 
-from errors import (  # .
+from .errors import (
     BadButtons,
     BadOnly,
     IncorrectDataType,
