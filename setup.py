@@ -4,11 +4,11 @@ with open("README.md","r",encoding="utf-8") as fh:
 
 setup(
     name="dinteractions_Paginator",
-    version="1.3.4",
+    version="1.3.5",
     description="Unofficial discord-interactions multi page embed handler",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/JUGADOR123/Paginator.py",
+    url="https://github.com/JUGADOR123/dinteractions-Paginator",
     author="Jugador123",
     author_email="momocordova@gmail.com",
     license="GNU",

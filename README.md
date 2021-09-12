@@ -4,6 +4,7 @@ Unofficial discord-interactions multi-page embed handler
 [![Discord](https://img.shields.io/discord/859508565101248582?color=blue&label=discord&style=for-the-badge)](https://discord.gg/UYCaSsMewk) [![PyPI - Downloads](https://img.shields.io/pypi/dm/dinteractions-Paginator?color=blue&style=for-the-badge)](https://pypi.org/project/dinteractions-Paginator/)
 
 ## Table of Contents
+(Only works in the [GitHub](https://github.com/JUGADOR123/dinteractions-Paginator/) for some reason)
 - [Features](#feats)
 - [Installation](#install)
 - [Dependencies](#dep)
@@ -22,6 +23,7 @@ Unofficial discord-interactions multi-page embed handler
 - Select labels are generated based on embed's title
 - Index button that can be turned on/off
 - Ability to set the buttons to any emote, color or label
+- Custom buttons
 
 ### Join our [Discord server](https://discord.gg/UYCaSsMewk)!
 - Try out all the possible combinations of the paginator with `/example1` and `/example2`,
@@ -44,7 +46,7 @@ pip install -U dinteractions-Paginator
 
 ### <a name="dep"></a> Dependencies
 - [discord.py](https://pypi.org/project/discord.py/) (version 1.7.3)
-- [discord-py-interactions](https://pypi.org/project/discord-py-interactions/) (version 3.0.1 - 3.0.2)
+- [discord-py-interactions](https://pypi.org/project/discord-py-interactions/) (version 3.0.2)
 
 ## <a name="examples"></a> Examples:
 These simple examples show how to easily create interactive, multiple page embeds that anyone can interact with that automatically deactivate after 60 seconds of inactivity:

@@ -1,7 +1,6 @@
 from asyncio import TimeoutError, get_running_loop
 from time import time
 from typing import List, Optional, Union, Callable
-from random import randint
 
 from discord import Embed, Emoji, Member, PartialEmoji, Role, User
 from discord.abc import User as userUser
@@ -110,6 +109,7 @@ class Paginator:
         customButtonStyle: Optional[Union[ButtonStyle, int]] = 2,
         quitButtonStyle: Optional[Union[ButtonStyle, int]] = 4,
     ) -> TimedOut:
+        # attributes:
         self.bot = bot
         self.ctx = ctx
         self.pages = pages
@@ -137,23 +137,19 @@ class Paginator:
         self.styles = [firstStyle, prevStyle, indexStyle, nextStyle, lastStyle]
         self.customActionRow = customActionRow
 
-        self.top = len(self.pages)  # limit of the paginator
-        self.multiContent = (
-            self.multiLabel
-        ) = self.multiURL = self.useCustomButton = False
+        # useful variables:
+        self.top = len(self.pages)
+        self.useCustomButton = False
+        self.multiLabel = self.multiContent = self.multiURL = False
         try:
             self.successfulUsers = [ctx.author]
         except AttributeError:
             self.successfulUsers = [ctx]
         self.failedUsers = []
-
         self.usedLink = self.usedCustom = self.usedQuit = False
-
         self.index = 1
-        self.random_id = randint(1, 999999)
 
-        # ERROR HANDLING
-
+        # error handling:
         self.incdata(
             "bot",
             self.bot,
@@ -252,88 +248,89 @@ class Paginator:
             (list, type(None)),
             "a list with the action row, then the function",
         )
-
         if self.useIndexButton and not self.useButtons:
             BadButtons("Index button cannot be used with useButtons=False!")
             self.useIndexButton = False
-
         if self.authorOnly and self.onlyFor:
             BadOnly()
             self.authorOnly = False
-
         if customButtonLabel is not None:
             self.useCustomButton = True
-
         if self.useSelect and len(self.pages) > 25:
             self.useSelect = False
             if self.useIndexButton is None:
                 self.useIndexButton = True
 
+    # main:
     async def run(self) -> TimedOut:
-        self.usedLink = self.usedCustom = self.usedQuit = False
-        try:
-            if self.dm:
-                if isinstance(self.ctx, (InteractionContext, Context, userUser)):
-                    msg = await self.ctx.author.send(
-                        content=self.content[0] if self.multiContent else self.content,
-                        embed=self.pages[0],
-                        components=self.components(),
-                    )
-                    await self.ctx.send("Check your DMs!", hidden=True) if isinstance(
-                        self.ctx, InteractionContext
-                    ) else await self.ctx.send("Check your DMs!")
-                elif isinstance(self.ctx, userUser):
-                    msg = await self.ctx.send(
-                        content=self.content[0] if self.multiContent else self.content,
-                        embed=self.pages[0],
-                        components=self.components(),
-                    )
-                else:
-                    raise IncorrectDataType(
-                        "ctx",
-                        "InteractionContext, commands.Context, or user for dm=True",
-                        self.ctx,
-                    )
-            else:
-                msg = (
-                    await self.ctx.send(
-                        content=self.content[0] if self.multiContent else self.content,
-                        embed=self.pages[0],
-                        components=self.components(),
-                        hidden=self.hidden,
-                    )
-                    if isinstance(self.ctx, InteractionContext)
-                    else await self.ctx.send(
-                        content=self.content[0] if self.multiContent else self.content,
-                        embed=self.pages[0],
-                        components=self.components(),
-                    )
+        # sending the message based on context and dm:
+        if self.dm:
+            if isinstance(self.ctx, (InteractionContext, Context)):
+                msg = await self.ctx.author.send(
+                    content=self.content[0] if self.multiContent else self.content,
+                    embed=self.pages[0],
+                    components=self.components(),
                 )
-        except Exception as e:
-            raise e
-        tmt = True
+                await self.ctx.send("Check your DMs!", hidden=True) if isinstance(
+                    self.ctx, InteractionContext
+                ) else await self.ctx.send("Check your DMs!")
+            elif isinstance(self.ctx, userUser):
+                msg = await self.ctx.send(
+                    content=self.content[0] if self.multiContent else self.content,
+                    embed=self.pages[0],
+                    components=self.components(),
+                )
+            else:
+                raise IncorrectDataType(
+                    "ctx",
+                    "InteractionContext, commands.Context, or user for dm=True",
+                    self.ctx,
+                )
+        else:
+            msg = (
+                await self.ctx.send(
+                    content=self.content[0] if self.multiContent else self.content,
+                    embed=self.pages[0],
+                    components=self.components(),
+                    hidden=self.hidden,
+                )
+                if isinstance(self.ctx, InteractionContext)
+                else await self.ctx.send(
+                    content=self.content[0] if self.multiContent else self.content,
+                    embed=self.pages[0],
+                    components=self.components(),
+                )
+            )
+        # more useful variables:
         start = time()
-        while tmt:
-            try:
+        buttonContext = None
+        # loop:
+        while True:
+            try:  # to catch TimeoutError if timeout
                 buttonContext: ComponentContext = await wait_for_component(
                     self.bot,
+                    messages=msg,
                     check=self.check,
                     components=self.components(),
                     timeout=self.timeout,
-                )
+                )  # waits for any component in the message
+                # add person who used it to the list:
                 if buttonContext.author not in self.successfulUsers:
                     self.successfulUsers.append(buttonContext.author)
-                if buttonContext.custom_id == f"first{self.random_id}":
+                # custom_id checks to determine which component:
+                if buttonContext.custom_id == f"first":
                     self.index = 1
-                elif buttonContext.custom_id == f"prev{self.random_id}":
+                elif buttonContext.custom_id == f"prev":
                     self.index = self.index - 1 or 1
-                elif buttonContext.custom_id == f"next{self.random_id}":
+                elif buttonContext.custom_id == f"next":
                     self.index = self.index + 1 or self.top
-                elif buttonContext.custom_id == f"last{self.random_id}":
+                elif buttonContext.custom_id == f"last":
                     self.index = self.top
-                elif buttonContext.custom_id == f"select{self.random_id}":
+                # select:
+                elif buttonContext.custom_id == f"select":
                     self.index = int(buttonContext.selected_options[0])
-                elif buttonContext.custom_id == f"quit{self.random_id}":
+                # quit button:
+                elif buttonContext.custom_id == f"quit":
                     tmt = False
                     end = time()
                     if self.deleteAfterTimeout and not self.hidden:
@@ -356,10 +353,11 @@ class Paginator:
                         self.successfulUsers,
                         self.failedUsers,
                     )
+                # uses the customActionRow
                 elif self.customActionRow is not None:
                     await self.customActionRow[1](self, buttonContext)
                     continue
-
+                # finally edits based on changed values
                 await buttonContext.edit_origin(
                     content=self.content[self.index - 1]
                     if self.multiContent
@@ -367,12 +365,13 @@ class Paginator:
                     embed=self.pages[self.index - 1],
                     components=self.components(),
                 )
-            except TimeoutError:
-                tmt = False
+            except TimeoutError:  # TimeoutError is catched due to timeout
+                # what to do after timeout:
                 if self.deleteAfterTimeout and not self.hidden:
                     await msg.edit(components=None)
                 elif self.disableAfterTimeout and not self.hidden:
                     await msg.edit(components=self.disabled())
+                # returns useful data:
                 return TimedOut(
                     self.ctx,
                     buttonContext,
@@ -385,32 +384,41 @@ class Paginator:
                     self.failedUsers,
                 )
 
+    # check for wait_for_component() in self.run()
     def check(self, buttonContext: ComponentContext) -> bool:
+        # if authorOnly and not same author:
         if self.authorOnly and buttonContext.author.id != self.ctx.author.id:
-            if buttonContext.author not in self.failedUsers:
-                if self.useNotYours:
-                    get_running_loop().create_task(
-                        buttonContext.send(
-                            f"{buttonContext.author.mention}, this paginator is not for you!",
-                            hidden=True,
-                        )
+            if self.useNotYours:  # whether or not to send hidden message
+                get_running_loop().create_task(
+                    buttonContext.send(
+                        f"{buttonContext.author.mention}, this paginator is not for you!",
+                        hidden=True,
                     )
+                )
+            # adds author to failedUsers
+            if buttonContext.author not in self.failedUsers:
                 self.failedUsers.append(buttonContext.author)
             return False
+
+        # if onlyFor is used:
         if self.onlyFor is not None:
             check = False
             if isinstance(self.onlyFor, list):
+                # checks if user in onlyFor:
                 for user in filter(lambda x: isinstance(x, userUser), self.onlyFor):
                     check = check or user.id == buttonContext.author.id
+                # checks if user has role in onlyFor:
                 for role in filter(lambda x: isinstance(x, roleRole), self.onlyFor):
                     check = check or role in buttonContext.author.roles
             else:
+                # checks if user in onlyFor:
                 if isinstance(self.onlyFor, userUser):
                     check = check or self.onlyFor.id == buttonContext.author.id
+                # checks if user has role in onlyFor:
                 elif isinstance(self.onlyFor, roleRole):
                     check = check or self.onlyFor in buttonContext.author.roles
 
-            if not check:
+            if not check:  # if check is False:
                 if self.useNotYours:
                     get_running_loop().create_task(
                         buttonContext.send(
@@ -418,28 +426,31 @@ class Paginator:
                             hidden=True,
                         )
                     )
-                self.failedUsers.append(buttonContext.author)
+                if buttonContext.author not in self.failedUsers:
+                    self.failedUsers.append(buttonContext.author)
                 return False
         return True
 
+    # select:
     def select_row(self) -> dict:
         select_options = []
-        for i in self.pages:
-            pageNum = self.pages.index(i) + 1
+        for i in self.pages:  # loops through pages (embeds)
+            pageNum = self.pages.index(i) + 1  # page number
             try:
-                title = i.title
-                if title == Embed.Empty:
+                title = i.title  # title of embed
+                if title == Embed.Empty:  # if there is no title:
                     select_options.append(
                         create_select_option(
                             f"{pageNum}: Title not found", value=f"{pageNum}"
                         )
                     )
-                else:
+                else:  # if there is a title:
+                    # makes sure that title is 100 characters or less
                     title = (title[:93] + "...") if len(title) > 96 else title
                     select_options.append(
                         create_select_option(f"{pageNum}: {title}", value=f"{pageNum}")
                     )
-            except Exception:
+            except Exception:  # if it failed for some reason:
                 select_options.append(
                     create_select_option(
                         f"{pageNum}: Title not found", value=f"{pageNum}"
@@ -447,88 +458,93 @@ class Paginator:
                 )
         select = create_select(
             options=select_options,
-            custom_id=f"select{self.random_id}",
-            placeholder=f"{self.labels[2]} {self.index}/{self.top}",
+            custom_id=f"select",
+            placeholder=f"{self.labels[2]} {self.index}/{self.top}",  # shows the index
             min_values=1,
             max_values=1,
         )
         return create_actionrow(select)
 
+    # buttons:
     def buttons_row(self) -> dict:
-        disableLeft = self.index == 1
-        disableRight = self.index == self.top
+        disableLeft = self.index == 1  # if buttons on left should be disabled
+        disableRight = self.index == self.top  # if buttons on right should be disabled
         controlButtons = [
-            create_button(
+            create_button(  # previous button
                 style=self.styles[1],
                 label=self.labels[1],
-                custom_id=f"prev{self.random_id}",
+                custom_id=f"prev",
                 disabled=disableLeft,
                 emoji=self.emojis[1],
             ),
-            create_button(
+            create_button(  # index button
                 style=self.styles[2],
                 label=f"{self.labels[2]} {self.index}/{self.top}",
                 disabled=True,
             ),
-            create_button(
+            create_button(  # next button
                 style=self.styles[3],
                 label=self.labels[3],
-                custom_id=f"next{self.random_id}",
+                custom_id=f"next",
                 disabled=disableRight,
                 emoji=self.emojis[2],
             ),
         ]
+        # removes index button if not useIndexButton:
         controlButtons.pop(1) if not self.useIndexButton else None
         if self.useFirstLast:
             controlButtons.insert(
                 0,
-                create_button(
+                create_button(  # first page button
                     style=self.styles[0],
                     label=self.labels[0],
-                    custom_id=f"first{self.random_id}",
+                    custom_id=f"first",
                     disabled=disableLeft,
                     emoji=self.emojis[0],
                 ),
             )
             controlButtons.append(
-                create_button(
+                create_button(  # last page button
                     style=self.styles[4],
                     label=self.labels[4],
-                    custom_id=f"last{self.random_id}",
+                    custom_id=f"last",
                     disabled=disableRight,
                     emoji=self.emojis[3],
                 )
             )
         if self.useLinkButton:
-            linkButton = create_button(
+            linkButton = create_button(  # link button
                 style=5,
                 label=self.links[0][0] if self.multiLabel else self.links[0],
                 url=self.links[1][0] if self.multiURL else self.links[1],
             )
+            # appends the button only if there is space in the action row:
             if len(controlButtons) < 5:
                 controlButtons.append(linkButton)
                 self.usedLink = True
             elif not self.useOverflow:
                 raise TooManyButtons()
         if self.useCustomButton:
-            customButton = create_button(
+            customButton = create_button(  # custom disabled button
                 style=self.custom[0],
                 label=self.custom[1],
                 disabled=True,
                 emoji=self.custom[2],
             )
+            # appends the button only if there is space in the action row:
             if len(controlButtons) < 5:
                 controlButtons.append(customButton)
                 self.usedCustom = True
             elif not self.useOverflow:
                 raise TooManyButtons()
         if self.useQuitButton:
-            quitButton = create_button(
+            quitButton = create_button(  # quit button
                 style=self.quit[0],
                 label=self.quit[1],
                 emoji=self.quit[2],
-                custom_id=f"quit{self.random_id}",
+                custom_id=f"quit",
             )
+            # appends the button only if there is space in the action row:
             if len(controlButtons) < 5:
                 controlButtons.append(quitButton)
                 self.usedCustom = True
@@ -536,34 +552,40 @@ class Paginator:
                 raise TooManyButtons()
         return create_actionrow(*controlButtons)
 
+    # overflow row:
     def overflow_row(self) -> dict:
         controlButtons = []
+        # checks if button is not already in self.buttons():
         if self.useLinkButton and not self.usedLink:
-            linkButton = create_button(
+            linkButton = create_button(  # link button
                 style=5,
                 label=self.links[0][0] if self.multiLabel else self.links[0],
                 url=self.links[1][0] if self.multiURL else self.links[1],
             )
             controlButtons.append(linkButton) if len(controlButtons) < 5 else None
+        # checks if button is not already in self.buttons():
         if self.useCustomButton and not self.usedCustom:
-            customButton = create_button(
+            customButton = create_button(  # custom disabled button
                 style=self.custom[0],
                 label=self.custom[1],
                 disabled=True,
                 emoji=self.custom[2],
             )
             controlButtons.append(customButton) if len(controlButtons) < 5 else None
+        # checks if button is not already in self.buttons():
         if self.useQuitButton and not self.usedCustom:
-            quitButton = create_button(
+            quitButton = create_button(  # quit button
                 style=self.quit[0],
                 label=self.quit[1],
                 emoji=self.quit[2],
-                custom_id=f"quit{self.random_id}",
+                custom_id=f"quit",
             )
             controlButtons.append(quitButton) if len(controlButtons) < 5 else None
         return None if controlButtons == [] else create_actionrow(*controlButtons)
 
+    # components:
     def components(self) -> list:
+        # takes the action rows from all the functions and returns as a list:
         return list(
             filter(
                 None,
@@ -576,7 +598,9 @@ class Paginator:
             )
         )
 
+    # stamds for incorrect data (uses indincdata)
     def incdata(self, name, arg, sup, supstr) -> None:
+        # stands for individual incdata (raises IncorrectDataType)
         def indincdata(name, arg, sup, supstr):
             if isinstance(arg, tuple) and isinstance(sup, tuple):
                 for a in arg:
@@ -594,6 +618,7 @@ class Paginator:
                 if not isinstance(arg, sup):
                     raise IncorrectDataType(name, supstr, arg)
 
+        # checks if there are multiple args to be indincdata'ed:
         if isinstance(name, dict) and arg is None:
             for n in name:
                 indincdata(
@@ -605,8 +630,10 @@ class Paginator:
         else:
             indincdata(name, arg, sup, supstr)
 
+    # disabled components:
     def disabled(self) -> list:
         components = self.components()
-        for component in (row for row in components):
-            component["disabled"] = True
+        for row in components:
+            for component in row["components"]:
+                component["disabled"] = True
         return components
