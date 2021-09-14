@@ -2,7 +2,7 @@ from asyncio import TimeoutError, get_running_loop
 from time import time
 from typing import List, Optional, Union, Callable
 
-from discord import Embed, Emoji, Member, PartialEmoji, Role, User
+from discord import Embed, Emoji, Member, PartialEmoji, Role, User, File
 from discord.abc import User as userUser
 from discord.channel import TextChannel
 from discord.ext.commands import AutoShardedBot, Bot, Context
@@ -62,6 +62,7 @@ class Paginator:
             User,
             Member,
         ],
+        
         pages: List[Embed],
         content: Optional[Union[str, List[str]]] = None,
         hidden: Optional[bool] = False,
@@ -73,6 +74,7 @@ class Paginator:
                 List[Union[User, Role]],
             ]
         ] = None,
+        files: Optional[File]= None,
         dm: Optional[bool] = False,
         customActionRow: Optional[List[Union[dict, Callable]]] = None,
         timeout: Optional[int] = None,
@@ -136,6 +138,7 @@ class Paginator:
         self.emojis = [firstEmoji, prevEmoji, nextEmoji, lastEmoji]
         self.styles = [firstStyle, prevStyle, indexStyle, nextStyle, lastStyle]
         self.customActionRow = customActionRow
+        self.files=files
 
         # useful variables:
         self.top = len(self.pages)
@@ -270,6 +273,7 @@ class Paginator:
                     content=self.content[0] if self.multiContent else self.content,
                     embed=self.pages[0],
                     components=self.components(),
+                    files=self.files
                 )
                 await self.ctx.send("Check your DMs!", hidden=True) if isinstance(
                     self.ctx, InteractionContext
@@ -279,6 +283,7 @@ class Paginator:
                     content=self.content[0] if self.multiContent else self.content,
                     embed=self.pages[0],
                     components=self.components(),
+                    files=self.files
                 )
             else:
                 raise IncorrectDataType(
@@ -299,6 +304,7 @@ class Paginator:
                     content=self.content[0] if self.multiContent else self.content,
                     embed=self.pages[0],
                     components=self.components(),
+                    files=self.files
                 )
             )
         # more useful variables:
