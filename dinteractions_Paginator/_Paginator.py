@@ -17,31 +17,25 @@ from discord_slash.utils.manage_components import (
     wait_for_component,
 )
 
-from .errors import (
-    BadButtons,
-    BadOnly,
-    IncorrectDataType,
-    TooManyButtons,
-    TooManyFiles
-)
+from .errors import BadButtons, BadOnly, IncorrectDataType, TooManyButtons, TooManyFiles
 
 
 class TimedOut:
     def __init__(
-            self,
-            ctx: Union[
-                InteractionContext,
-                Context,
-                TextChannel,
-                User,
-                Member,
-            ],
-            buttonContext: ComponentContext,
-            timeTaken: int,
-            lastContent: str,
-            lastEmbed: Embed,
-            successfulUsers: List[User],
-            failedUsers: List[User],
+        self,
+        ctx: Union[
+            InteractionContext,
+            Context,
+            TextChannel,
+            User,
+            Member,
+        ],
+        buttonContext: ComponentContext,
+        timeTaken: int,
+        lastContent: str,
+        lastEmbed: Embed,
+        successfulUsers: List[User],
+        failedUsers: List[User],
     ):
         self.ctx = ctx
         self.buttonContext = buttonContext
@@ -54,62 +48,62 @@ class TimedOut:
 
 class Paginator:
     def __init__(
-            self,
-            bot: Union[AutoShardedBot, Bot],
-            ctx: Union[
-                InteractionContext,
-                Context,
-                TextChannel,
+        self,
+        bot: Union[AutoShardedBot, Bot],
+        ctx: Union[
+            InteractionContext,
+            Context,
+            TextChannel,
+            User,
+            Member,
+        ],
+        pages: List[Embed],
+        content: Optional[Union[str, List[str]]] = None,
+        files: Optional[Union[File, List[File]]] = None,
+        hidden: Optional[bool] = False,
+        authorOnly: Optional[bool] = False,
+        onlyFor: Optional[
+            Union[
                 User,
-                Member,
-            ],
-            pages: List[Embed],
-            content: Optional[Union[str, List[str]]] = None,
-            files: Optional[Union[File, List[File]]] = None,
-            hidden: Optional[bool] = False,
-            authorOnly: Optional[bool] = False,
-            onlyFor: Optional[
-                Union[
-                    User,
-                    Role,
-                    List[Union[User, Role]],
-                ]
-            ] = None,
-            dm: Optional[bool] = False,
-            customActionRow: Optional[List[Union[dict, Callable]]] = None,
-            timeout: Optional[int] = None,
-            disableAfterTimeout: Optional[bool] = True,
-            deleteAfterTimeout: Optional[bool] = False,
-            useSelect: Optional[bool] = True,
-            useButtons: Optional[bool] = True,
-            useIndexButton: Optional[bool] = None,
-            useLinkButton: Optional[bool] = False,
-            useQuitButton: Optional[bool] = False,
-            useFirstLast: Optional[bool] = True,
-            useOverflow: Optional[bool] = True,
-            useNotYours: Optional[bool] = True,
-            firstLabel: Optional[str] = "",
-            prevLabel: Optional[str] = "",
-            indexLabel: Optional[str] = "Page",
-            nextLabel: Optional[str] = "",
-            lastLabel: Optional[str] = "",
-            linkLabel: Optional[Union[str, List[str]]] = "",
-            linkURL: Optional[Union[str, List[str]]] = "",
-            customButtonLabel: Optional[str] = None,
-            quitButtonLabel: Optional[str] = "Quit",
-            firstEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "⏮️",
-            prevEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "◀",
-            nextEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "▶",
-            lastEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "⏭️",
-            customButtonEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = None,
-            quitButtonEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = None,
-            firstStyle: Optional[Union[ButtonStyle, int]] = 1,
-            prevStyle: Optional[Union[ButtonStyle, int]] = 1,
-            indexStyle: Optional[Union[ButtonStyle, int]] = 2,
-            nextStyle: Optional[Union[ButtonStyle, int]] = 1,
-            lastStyle: Optional[Union[ButtonStyle, int]] = 1,
-            customButtonStyle: Optional[Union[ButtonStyle, int]] = 2,
-            quitButtonStyle: Optional[Union[ButtonStyle, int]] = 4,
+                Role,
+                List[Union[User, Role]],
+            ]
+        ] = None,
+        dm: Optional[bool] = False,
+        customActionRow: Optional[List[Union[dict, Callable]]] = None,
+        timeout: Optional[int] = None,
+        disableAfterTimeout: Optional[bool] = True,
+        deleteAfterTimeout: Optional[bool] = False,
+        useSelect: Optional[bool] = True,
+        useButtons: Optional[bool] = True,
+        useIndexButton: Optional[bool] = None,
+        useLinkButton: Optional[bool] = False,
+        useQuitButton: Optional[bool] = False,
+        useFirstLast: Optional[bool] = True,
+        useOverflow: Optional[bool] = True,
+        useNotYours: Optional[bool] = True,
+        firstLabel: Optional[str] = "",
+        prevLabel: Optional[str] = "",
+        indexLabel: Optional[str] = "Page",
+        nextLabel: Optional[str] = "",
+        lastLabel: Optional[str] = "",
+        linkLabel: Optional[Union[str, List[str]]] = "",
+        linkURL: Optional[Union[str, List[str]]] = "",
+        customButtonLabel: Optional[str] = None,
+        quitButtonLabel: Optional[str] = "Quit",
+        firstEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "⏮️",
+        prevEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "◀",
+        nextEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "▶",
+        lastEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "⏭️",
+        customButtonEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = None,
+        quitButtonEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = None,
+        firstStyle: Optional[Union[ButtonStyle, int]] = 1,
+        prevStyle: Optional[Union[ButtonStyle, int]] = 1,
+        indexStyle: Optional[Union[ButtonStyle, int]] = 2,
+        nextStyle: Optional[Union[ButtonStyle, int]] = 1,
+        lastStyle: Optional[Union[ButtonStyle, int]] = 1,
+        customButtonStyle: Optional[Union[ButtonStyle, int]] = 2,
+        quitButtonStyle: Optional[Union[ButtonStyle, int]] = 4,
     ) -> None:
         # attributes:
         self.bot = bot
@@ -277,7 +271,7 @@ class Paginator:
                     content=self.content[0] if self.multiContent else self.content,
                     embed=self.pages[0],
                     components=self.components(),
-                    files=self.files
+                    files=self.files,
                 )
                 await self.ctx.send("Check your DMs!", hidden=True) if isinstance(
                     self.ctx, InteractionContext
@@ -287,7 +281,7 @@ class Paginator:
                     content=self.content[0] if self.multiContent else self.content,
                     embed=self.pages[0],
                     components=self.components(),
-                    files=self.files
+                    files=self.files,
                 )
             else:
                 raise IncorrectDataType(
@@ -302,14 +296,14 @@ class Paginator:
                     embed=self.pages[0],
                     components=self.components(),
                     hidden=self.hidden,
-                    files=self.files
+                    files=self.files,
                 )
                 if isinstance(self.ctx, InteractionContext)
                 else await self.ctx.send(
                     content=self.content[0] if self.multiContent else self.content,
                     embed=self.pages[0],
                     components=self.components(),
-                    files=self.files
+                    files=self.files,
                 )
             )
         # more useful variables:
