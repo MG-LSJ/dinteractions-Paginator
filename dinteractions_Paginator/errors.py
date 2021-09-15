@@ -19,6 +19,13 @@ class TooManyButtons(PaginatorError):
         )
 
 
+class TooManyFiles(PaginatorError):
+    def __init__(self):
+        super().__init__(
+            "Too many files! Max 10!"
+        )
+
+
 class PaginatorWarning(Warning):
     """Base class for warnings"""
 
