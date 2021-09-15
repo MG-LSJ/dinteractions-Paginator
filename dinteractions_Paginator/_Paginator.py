@@ -22,25 +22,26 @@ from .errors import (
     BadOnly,
     IncorrectDataType,
     TooManyButtons,
+    TooManyFiles
 )
 
 
 class TimedOut:
     def __init__(
-        self,
-        ctx: Union[
-            InteractionContext,
-            Context,
-            TextChannel,
-            User,
-            Member,
-        ],
-        buttonContext: ComponentContext,
-        timeTaken: int,
-        lastContent: str,
-        lastEmbed: Embed,
-        successfulUsers: List[User],
-        failedUsers: List[User],
+            self,
+            ctx: Union[
+                InteractionContext,
+                Context,
+                TextChannel,
+                User,
+                Member,
+            ],
+            buttonContext: ComponentContext,
+            timeTaken: int,
+            lastContent: str,
+            lastEmbed: Embed,
+            successfulUsers: List[User],
+            failedUsers: List[User],
     ):
         self.ctx = ctx
         self.buttonContext = buttonContext
@@ -53,69 +54,69 @@ class TimedOut:
 
 class Paginator:
     def __init__(
-        self,
-        bot: Union[AutoShardedBot, Bot],
-        ctx: Union[
-            InteractionContext,
-            Context,
-            TextChannel,
-            User,
-            Member,
-        ],
-        
-        pages: List[Embed],
-        content: Optional[Union[str, List[str]]] = None,
-        hidden: Optional[bool] = False,
-        authorOnly: Optional[bool] = False,
-        onlyFor: Optional[
-            Union[
+            self,
+            bot: Union[AutoShardedBot, Bot],
+            ctx: Union[
+                InteractionContext,
+                Context,
+                TextChannel,
                 User,
-                Role,
-                List[Union[User, Role]],
-            ]
-        ] = None,
-        files: Optional[File]= None,
-        dm: Optional[bool] = False,
-        customActionRow: Optional[List[Union[dict, Callable]]] = None,
-        timeout: Optional[int] = None,
-        disableAfterTimeout: Optional[bool] = True,
-        deleteAfterTimeout: Optional[bool] = False,
-        useSelect: Optional[bool] = True,
-        useButtons: Optional[bool] = True,
-        useIndexButton: Optional[bool] = None,
-        useLinkButton: Optional[bool] = False,
-        useQuitButton: Optional[bool] = False,
-        useFirstLast: Optional[bool] = True,
-        useOverflow: Optional[bool] = True,
-        useNotYours: Optional[bool] = True,
-        firstLabel: Optional[str] = "",
-        prevLabel: Optional[str] = "",
-        indexLabel: Optional[str] = "Page",
-        nextLabel: Optional[str] = "",
-        lastLabel: Optional[str] = "",
-        linkLabel: Optional[Union[str, List[str]]] = "",
-        linkURL: Optional[Union[str, List[str]]] = "",
-        customButtonLabel: Optional[str] = None,
-        quitButtonLabel: Optional[str] = "Quit",
-        firstEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "⏮️",
-        prevEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "◀",
-        nextEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "▶",
-        lastEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "⏭️",
-        customButtonEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = None,
-        quitButtonEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = None,
-        firstStyle: Optional[Union[ButtonStyle, int]] = 1,
-        prevStyle: Optional[Union[ButtonStyle, int]] = 1,
-        indexStyle: Optional[Union[ButtonStyle, int]] = 2,
-        nextStyle: Optional[Union[ButtonStyle, int]] = 1,
-        lastStyle: Optional[Union[ButtonStyle, int]] = 1,
-        customButtonStyle: Optional[Union[ButtonStyle, int]] = 2,
-        quitButtonStyle: Optional[Union[ButtonStyle, int]] = 4,
-    ) -> TimedOut:
+                Member,
+            ],
+            pages: List[Embed],
+            content: Optional[Union[str, List[str]]] = None,
+            files: Optional[Union[File, List[File]]] = None,
+            hidden: Optional[bool] = False,
+            authorOnly: Optional[bool] = False,
+            onlyFor: Optional[
+                Union[
+                    User,
+                    Role,
+                    List[Union[User, Role]],
+                ]
+            ] = None,
+            dm: Optional[bool] = False,
+            customActionRow: Optional[List[Union[dict, Callable]]] = None,
+            timeout: Optional[int] = None,
+            disableAfterTimeout: Optional[bool] = True,
+            deleteAfterTimeout: Optional[bool] = False,
+            useSelect: Optional[bool] = True,
+            useButtons: Optional[bool] = True,
+            useIndexButton: Optional[bool] = None,
+            useLinkButton: Optional[bool] = False,
+            useQuitButton: Optional[bool] = False,
+            useFirstLast: Optional[bool] = True,
+            useOverflow: Optional[bool] = True,
+            useNotYours: Optional[bool] = True,
+            firstLabel: Optional[str] = "",
+            prevLabel: Optional[str] = "",
+            indexLabel: Optional[str] = "Page",
+            nextLabel: Optional[str] = "",
+            lastLabel: Optional[str] = "",
+            linkLabel: Optional[Union[str, List[str]]] = "",
+            linkURL: Optional[Union[str, List[str]]] = "",
+            customButtonLabel: Optional[str] = None,
+            quitButtonLabel: Optional[str] = "Quit",
+            firstEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "⏮️",
+            prevEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "◀",
+            nextEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "▶",
+            lastEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "⏭️",
+            customButtonEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = None,
+            quitButtonEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = None,
+            firstStyle: Optional[Union[ButtonStyle, int]] = 1,
+            prevStyle: Optional[Union[ButtonStyle, int]] = 1,
+            indexStyle: Optional[Union[ButtonStyle, int]] = 2,
+            nextStyle: Optional[Union[ButtonStyle, int]] = 1,
+            lastStyle: Optional[Union[ButtonStyle, int]] = 1,
+            customButtonStyle: Optional[Union[ButtonStyle, int]] = 2,
+            quitButtonStyle: Optional[Union[ButtonStyle, int]] = 4,
+    ) -> None:
         # attributes:
         self.bot = bot
         self.ctx = ctx
         self.pages = pages
         self.content = content
+        self.files = files if isinstance(files, (list, type(None))) else [files]
         self.hidden = hidden
         self.authorOnly = authorOnly
         self.onlyFor = onlyFor
@@ -138,7 +139,6 @@ class Paginator:
         self.emojis = [firstEmoji, prevEmoji, nextEmoji, lastEmoji]
         self.styles = [firstStyle, prevStyle, indexStyle, nextStyle, lastStyle]
         self.customActionRow = customActionRow
-        self.files=files
 
         # useful variables:
         self.top = len(self.pages)
@@ -165,9 +165,11 @@ class Paginator:
             (InteractionContext, Context, TextChannel, User, Member),
             "InteractionContext, commands.Context, discord.TextChannel, discord.User, or discord.Member",
         )
+        self.incdata("pages", self.pages, list, "List[discord.Embed]")
         self.incdata(
             "content", self.content, (list, str, type(None)), "str or list(str)"
         )
+        self.incdata("files", self.files, (list, type(None)), "List[discord.File]")
         self.incdata("hidden", self.hidden, bool, "bool")
         self.incdata("authorOnly", self.authorOnly, bool, "bool")
         self.incdata(
@@ -263,6 +265,8 @@ class Paginator:
             self.useSelect = False
             if self.useIndexButton is None:
                 self.useIndexButton = True
+        if len(self.files) > 10:
+            raise TooManyFiles
 
     # main:
     async def run(self) -> TimedOut:
@@ -298,6 +302,7 @@ class Paginator:
                     embed=self.pages[0],
                     components=self.components(),
                     hidden=self.hidden,
+                    files=self.files
                 )
                 if isinstance(self.ctx, InteractionContext)
                 else await self.ctx.send(
@@ -337,7 +342,6 @@ class Paginator:
                     self.index = int(buttonContext.selected_options[0])
                 # quit button:
                 elif buttonContext.custom_id == f"quit":
-                    tmt = False
                     end = time()
                     if self.deleteAfterTimeout and not self.hidden:
                         await buttonContext.edit_origin(components=None)
@@ -604,7 +608,7 @@ class Paginator:
             )
         )
 
-    # stamds for incorrect data (uses indincdata)
+    # stands for incorrect data (uses indincdata)
     def incdata(self, name, arg, sup, supstr) -> None:
         # stands for individual incdata (raises IncorrectDataType)
         def indincdata(name, arg, sup, supstr):
@@ -627,12 +631,7 @@ class Paginator:
         # checks if there are multiple args to be indincdata'ed:
         if isinstance(name, dict) and arg is None:
             for n in name:
-                indincdata(
-                    n,
-                    name[n],
-                    sup,
-                    supstr,
-                )
+                indincdata(n, name[n], sup, supstr)
         else:
             indincdata(name, arg, sup, supstr)
 
