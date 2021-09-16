@@ -33,7 +33,7 @@ class TimedOut:
         buttonContext: ComponentContext,
         timeTaken: int,
         lastContent: str,
-        lastEmbed: Embed,
+        lastEmbed: Union[Embed, type(None)],
         successfulUsers: List[User],
         failedUsers: List[User],
     ):
@@ -57,7 +57,7 @@ class Paginator:
             User,
             Member,
         ],
-        pages: List[Embed],
+        pages: Optional[List[Embed]] = None,
         content: Optional[Union[str, List[str]]] = None,
         files: Optional[Union[File, List[File]]] = None,
         hidden: Optional[bool] = False,
@@ -108,7 +108,7 @@ class Paginator:
         # attributes:
         self.bot = bot
         self.ctx = ctx
-        self.pages = pages
+        self.pages = [pages] if isinstance(pages, type(None)) else pages
         self.content = content
         self.files = files if isinstance(files, (list, type(None))) else [files]
         self.hidden = hidden
@@ -134,8 +134,16 @@ class Paginator:
         self.styles = [firstStyle, prevStyle, indexStyle, nextStyle, lastStyle]
         self.customActionRow = customActionRow
 
+        if self.pages is None and not isinstance(self.content, list):
+            raise IncorrectDataType(
+                "both pages and content",
+                "content has to be a list of strings if pages is not used!",
+                self.pages,
+            )
+
         # useful variables:
-        self.top = len(self.pages)
+        self.embeds = self.pages[0] is not None
+        self.top = len(self.pages) if self.embeds else len(self.content)
         self.useCustomButton = False
         self.multiLabel = self.multiContent = self.multiURL = False
         try:
@@ -247,6 +255,9 @@ class Paginator:
             (list, type(None)),
             "a list with the action row, then the function",
         )
+        self.multiContent = type(self.content) == list
+        self.multiLabel = type(self.links[0]) == list
+        self.multiURL = type(self.links[1]) == list
         if self.useIndexButton and not self.useButtons:
             BadButtons("Index button cannot be used with useButtons=False!")
             self.useIndexButton = False
@@ -347,7 +358,7 @@ class Paginator:
                         if isinstance(self.content, (str, type(None)))
                         else self.content[self.index - 1]
                     )
-                    lastEmbed = self.pages[self.index - 1]
+                    lastEmbed = self.pages[self.index - 1] if self.embeds else None
                     return TimedOut(
                         self.ctx,
                         buttonContext,
@@ -366,7 +377,7 @@ class Paginator:
                     content=self.content[self.index - 1]
                     if self.multiContent
                     else self.content,
-                    embed=self.pages[self.index - 1],
+                    embed=self.pages[self.index - 1] if self.embeds else None,
                     components=self.components(),
                 )
             except TimeoutError:  # TimeoutError is catched due to timeout
@@ -383,7 +394,7 @@ class Paginator:
                     self.content
                     if isinstance(self.content, (str, type(None)))
                     else self.content[self.index - 1],
-                    self.pages[self.index - 1],
+                    self.pages[self.index - 1] if self.embeds else None,
                     self.successfulUsers,
                     self.failedUsers,
                 )
@@ -438,10 +449,14 @@ class Paginator:
     # select:
     def select_row(self) -> dict:
         select_options = []
-        for i in self.pages:  # loops through pages (embeds)
-            pageNum = self.pages.index(i) + 1  # page number
+        for i in (
+            self.pages if self.embeds else self.content
+        ):  # loops through pages (embeds)
+            pageNum = (self.pages if self.embeds else self.content).index(
+                i
+            ) + 1  # page number
             try:
-                title = i.title  # title of embed
+                title = i.title if self.embeds else i  # title of embed
                 if title == Embed.Empty:  # if there is no title:
                     select_options.append(
                         create_select_option(
