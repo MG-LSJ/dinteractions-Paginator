@@ -158,12 +158,12 @@ bot.run("token")
       <br>NOTE: if one of the latter 3 are used, there will always be a `This interaction failed` even though it was a
       success, due to no context to respond to
 
-- `pages` - `List[discord.Embed]`: A list of embeds to be paginated
-
 ------------------------------
 
 ### <a name="opt"></a> Optional:
 
+- `pages` - `Optional[List[discord.Embed]]`: the list of embeds to be paginated, defaults to `None` and paginates `content` instead
+  <br>NOTE: `content` must be a list for paginating without `pages`!
 - `content` - `Optional[Union[str, List[str]]]`: the content of the message to send, defaults to `None`
 - `files` - `Optional[Union[discord.File, List[discord.File]]]`: files to send, defaults to `None`
 - `hidden` - `Optional[bool]`: if you want the paginator to be hidden, default `False`
