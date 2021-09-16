@@ -2,7 +2,7 @@ from asyncio import TimeoutError, get_running_loop
 from time import time
 from typing import List, Optional, Union, Callable
 
-from discord import Embed, Emoji, Member, PartialEmoji, Role, User
+from discord import Embed, Emoji, Member, PartialEmoji, Role, User, File
 from discord.abc import User as userUser
 from discord.channel import TextChannel
 from discord.ext.commands import AutoShardedBot, Bot, Context
@@ -17,12 +17,7 @@ from discord_slash.utils.manage_components import (
     wait_for_component,
 )
 
-from .errors import (
-    BadButtons,
-    BadOnly,
-    IncorrectDataType,
-    TooManyButtons,
-)
+from .errors import BadButtons, BadOnly, IncorrectDataType, TooManyButtons, TooManyFiles
 
 
 class TimedOut:
@@ -38,7 +33,7 @@ class TimedOut:
         buttonContext: ComponentContext,
         timeTaken: int,
         lastContent: str,
-        lastEmbed: Embed,
+        lastEmbed: Union[Embed, type(None)],
         successfulUsers: List[User],
         failedUsers: List[User],
     ):
@@ -62,8 +57,9 @@ class Paginator:
             User,
             Member,
         ],
-        pages: List[Embed],
+        pages: Optional[List[Embed]] = None,
         content: Optional[Union[str, List[str]]] = None,
+        files: Optional[Union[File, List[File]]] = None,
         hidden: Optional[bool] = False,
         authorOnly: Optional[bool] = False,
         onlyFor: Optional[
@@ -108,12 +104,13 @@ class Paginator:
         lastStyle: Optional[Union[ButtonStyle, int]] = 1,
         customButtonStyle: Optional[Union[ButtonStyle, int]] = 2,
         quitButtonStyle: Optional[Union[ButtonStyle, int]] = 4,
-    ) -> TimedOut:
+    ) -> None:
         # attributes:
         self.bot = bot
         self.ctx = ctx
-        self.pages = pages
+        self.pages = [pages] if isinstance(pages, type(None)) else pages
         self.content = content
+        self.files = files if isinstance(files, (list, type(None))) else [files]
         self.hidden = hidden
         self.authorOnly = authorOnly
         self.onlyFor = onlyFor
@@ -137,8 +134,16 @@ class Paginator:
         self.styles = [firstStyle, prevStyle, indexStyle, nextStyle, lastStyle]
         self.customActionRow = customActionRow
 
+        if self.pages is None and not isinstance(self.content, list):
+            raise IncorrectDataType(
+                "both pages and content",
+                "content has to be a list of strings if pages is not used!",
+                self.pages,
+            )
+
         # useful variables:
-        self.top = len(self.pages)
+        self.embeds = self.pages[0] is not None
+        self.top = len(self.pages) if self.embeds else len(self.content)
         self.useCustomButton = False
         self.multiLabel = self.multiContent = self.multiURL = False
         try:
@@ -162,9 +167,11 @@ class Paginator:
             (InteractionContext, Context, TextChannel, User, Member),
             "InteractionContext, commands.Context, discord.TextChannel, discord.User, or discord.Member",
         )
+        self.incdata("pages", self.pages, list, "List[discord.Embed]")
         self.incdata(
             "content", self.content, (list, str, type(None)), "str or list(str)"
         )
+        self.incdata("files", self.files, (list, type(None)), "List[discord.File]")
         self.incdata("hidden", self.hidden, bool, "bool")
         self.incdata("authorOnly", self.authorOnly, bool, "bool")
         self.incdata(
@@ -248,6 +255,9 @@ class Paginator:
             (list, type(None)),
             "a list with the action row, then the function",
         )
+        self.multiContent = type(self.content) == list
+        self.multiLabel = type(self.links[0]) == list
+        self.multiURL = type(self.links[1]) == list
         if self.useIndexButton and not self.useButtons:
             BadButtons("Index button cannot be used with useButtons=False!")
             self.useIndexButton = False
@@ -260,6 +270,8 @@ class Paginator:
             self.useSelect = False
             if self.useIndexButton is None:
                 self.useIndexButton = True
+        if len(self.files) > 10:
+            raise TooManyFiles
 
     # main:
     async def run(self) -> TimedOut:
@@ -270,6 +282,7 @@ class Paginator:
                     content=self.content[0] if self.multiContent else self.content,
                     embed=self.pages[0],
                     components=self.components(),
+                    files=self.files,
                 )
                 await self.ctx.send("Check your DMs!", hidden=True) if isinstance(
                     self.ctx, InteractionContext
@@ -279,6 +292,7 @@ class Paginator:
                     content=self.content[0] if self.multiContent else self.content,
                     embed=self.pages[0],
                     components=self.components(),
+                    files=self.files,
                 )
             else:
                 raise IncorrectDataType(
@@ -293,12 +307,14 @@ class Paginator:
                     embed=self.pages[0],
                     components=self.components(),
                     hidden=self.hidden,
+                    files=self.files,
                 )
                 if isinstance(self.ctx, InteractionContext)
                 else await self.ctx.send(
                     content=self.content[0] if self.multiContent else self.content,
                     embed=self.pages[0],
                     components=self.components(),
+                    files=self.files,
                 )
             )
         # more useful variables:
@@ -331,7 +347,6 @@ class Paginator:
                     self.index = int(buttonContext.selected_options[0])
                 # quit button:
                 elif buttonContext.custom_id == f"quit":
-                    tmt = False
                     end = time()
                     if self.deleteAfterTimeout and not self.hidden:
                         await buttonContext.edit_origin(components=None)
@@ -343,7 +358,7 @@ class Paginator:
                         if isinstance(self.content, (str, type(None)))
                         else self.content[self.index - 1]
                     )
-                    lastEmbed = self.pages[self.index - 1]
+                    lastEmbed = self.pages[self.index - 1] if self.embeds else None
                     return TimedOut(
                         self.ctx,
                         buttonContext,
@@ -362,7 +377,7 @@ class Paginator:
                     content=self.content[self.index - 1]
                     if self.multiContent
                     else self.content,
-                    embed=self.pages[self.index - 1],
+                    embed=self.pages[self.index - 1] if self.embeds else None,
                     components=self.components(),
                 )
             except TimeoutError:  # TimeoutError is catched due to timeout
@@ -379,7 +394,7 @@ class Paginator:
                     self.content
                     if isinstance(self.content, (str, type(None)))
                     else self.content[self.index - 1],
-                    self.pages[self.index - 1],
+                    self.pages[self.index - 1] if self.embeds else None,
                     self.successfulUsers,
                     self.failedUsers,
                 )
@@ -434,10 +449,14 @@ class Paginator:
     # select:
     def select_row(self) -> dict:
         select_options = []
-        for i in self.pages:  # loops through pages (embeds)
-            pageNum = self.pages.index(i) + 1  # page number
+        for i in (
+            self.pages if self.embeds else self.content
+        ):  # loops through pages (embeds)
+            pageNum = (self.pages if self.embeds else self.content).index(
+                i
+            ) + 1  # page number
             try:
-                title = i.title  # title of embed
+                title = i.title if self.embeds else i  # title of embed
                 if title == Embed.Empty:  # if there is no title:
                     select_options.append(
                         create_select_option(
@@ -598,7 +617,7 @@ class Paginator:
             )
         )
 
-    # stamds for incorrect data (uses indincdata)
+    # stands for incorrect data (uses indincdata)
     def incdata(self, name, arg, sup, supstr) -> None:
         # stands for individual incdata (raises IncorrectDataType)
         def indincdata(name, arg, sup, supstr):
@@ -621,12 +640,7 @@ class Paginator:
         # checks if there are multiple args to be indincdata'ed:
         if isinstance(name, dict) and arg is None:
             for n in name:
-                indincdata(
-                    n,
-                    name[n],
-                    sup,
-                    supstr,
-                )
+                indincdata(n, name[n], sup, supstr)
         else:
             indincdata(name, arg, sup, supstr)
 
