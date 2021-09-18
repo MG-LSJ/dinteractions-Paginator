@@ -270,8 +270,9 @@ class Paginator:
             self.useSelect = False
             if self.useIndexButton is None:
                 self.useIndexButton = True
-        if len(self.files) > 10:
-            raise TooManyFiles
+        if isinstance(self.files, list):
+            if len(self.files) > 10:
+                raise TooManyFiles
 
     # main:
     async def run(self) -> TimedOut:
