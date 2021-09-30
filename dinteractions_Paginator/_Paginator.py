@@ -1,11 +1,12 @@
 from asyncio import TimeoutError, get_running_loop
 from time import time
-from typing import List, Optional, Union, Callable
+from typing import List, Optional, Union, Awaitable
 
 from discord import Embed, Emoji, Member, PartialEmoji, Role, User, File
 from discord.abc import User as userUser
 from discord.channel import TextChannel
 from discord.ext.commands import AutoShardedBot, Bot, Context
+from discord.errors import NotFound
 from discord.role import Role as roleRole
 from discord_slash.context import ComponentContext, InteractionContext
 from discord_slash.model import ButtonStyle
@@ -70,7 +71,8 @@ class Paginator:
             ]
         ] = None,
         dm: Optional[bool] = False,
-        customActionRow: Optional[List[Union[dict, Callable]]] = None,
+        customButton: Optional[List[Union[dict, Awaitable]]] = None,
+        customActionRow: Optional[List[Union[dict, Awaitable]]] = None,
         timeout: Optional[int] = None,
         disableAfterTimeout: Optional[bool] = True,
         deleteAfterTimeout: Optional[bool] = False,
@@ -89,20 +91,17 @@ class Paginator:
         lastLabel: Optional[str] = "",
         linkLabel: Optional[Union[str, List[str]]] = "",
         linkURL: Optional[Union[str, List[str]]] = "",
-        customButtonLabel: Optional[str] = None,
         quitButtonLabel: Optional[str] = "Quit",
         firstEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "⏮️",
         prevEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "◀",
         nextEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "▶",
         lastEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = "⏭️",
-        customButtonEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = None,
         quitButtonEmoji: Optional[Union[Emoji, PartialEmoji, dict, str]] = None,
         firstStyle: Optional[Union[ButtonStyle, int]] = 1,
         prevStyle: Optional[Union[ButtonStyle, int]] = 1,
         indexStyle: Optional[Union[ButtonStyle, int]] = 2,
         nextStyle: Optional[Union[ButtonStyle, int]] = 1,
         lastStyle: Optional[Union[ButtonStyle, int]] = 1,
-        customButtonStyle: Optional[Union[ButtonStyle, int]] = 2,
         quitButtonStyle: Optional[Union[ButtonStyle, int]] = 4,
     ) -> None:
         # attributes:
@@ -128,10 +127,10 @@ class Paginator:
         self.useNotYours = useNotYours
         self.labels = [firstLabel, prevLabel, indexLabel, nextLabel, lastLabel]
         self.links = [linkLabel, linkURL]
-        self.custom = [customButtonStyle, customButtonLabel, customButtonEmoji]
         self.quit = [quitButtonStyle, quitButtonLabel, quitButtonEmoji]
         self.emojis = [firstEmoji, prevEmoji, nextEmoji, lastEmoji]
         self.styles = [firstStyle, prevStyle, indexStyle, nextStyle, lastStyle]
+        self.customButton = customButton
         self.customActionRow = customActionRow
 
         if self.pages is None and not isinstance(self.content, list):
@@ -216,7 +215,6 @@ class Paginator:
             str,
             "str",
         )
-        self.incdata("customButtonLabel", customButtonLabel, (str, type(None)), "str")
         self.incdata(
             "quitButtonEmoji",
             quitButtonEmoji,
@@ -250,10 +248,16 @@ class Paginator:
             "ButtonStyle or int",
         )
         self.incdata(
+            "customButton",
+            self.customButton,
+            (list, type(None)),
+            "a list with create_button(...), then the awaitable function",
+        )
+        self.incdata(
             "customActionRow",
             self.customActionRow,
             (list, type(None)),
-            "a list with the action row, then the function",
+            "a list with the action row, then the awaitable function",
         )
         self.multiContent = type(self.content) == list
         self.multiLabel = type(self.links[0]) == list
@@ -264,7 +268,7 @@ class Paginator:
         if self.authorOnly and self.onlyFor:
             BadOnly()
             self.authorOnly = False
-        if customButtonLabel is not None:
+        if self.customButton is not None:
             self.useCustomButton = True
         if self.useSelect and len(self.pages) > 25:
             self.useSelect = False
@@ -335,19 +339,19 @@ class Paginator:
                 if buttonContext.author not in self.successfulUsers:
                     self.successfulUsers.append(buttonContext.author)
                 # custom_id checks to determine which component:
-                if buttonContext.custom_id == f"first":
+                if buttonContext.custom_id == "first":
                     self.index = 1
-                elif buttonContext.custom_id == f"prev":
+                elif buttonContext.custom_id == "prev":
                     self.index = self.index - 1 or 1
-                elif buttonContext.custom_id == f"next":
+                elif buttonContext.custom_id == "next":
                     self.index = self.index + 1 or self.top
-                elif buttonContext.custom_id == f"last":
+                elif buttonContext.custom_id == "last":
                     self.index = self.top
                 # select:
-                elif buttonContext.custom_id == f"select":
+                elif buttonContext.custom_id == "select":
                     self.index = int(buttonContext.selected_options[0])
                 # quit button:
-                elif buttonContext.custom_id == f"quit":
+                elif buttonContext.custom_id == "quit":
                     end = time()
                     if self.deleteAfterTimeout and not self.hidden:
                         await buttonContext.edit_origin(components=None)
@@ -369,6 +373,11 @@ class Paginator:
                         self.successfulUsers,
                         self.failedUsers,
                     )
+                # customButton:
+                elif buttonContext.custom_id == "customButton":
+                    if self.customButton is not None:
+                        await self.customButton[1](self, buttonContext)
+                    continue
                 # uses the customActionRow
                 elif self.customActionRow is not None:
                     await self.customActionRow[1](self, buttonContext)
@@ -381,12 +390,15 @@ class Paginator:
                     embed=self.pages[self.index - 1] if self.embeds else None,
                     components=self.components(),
                 )
-            except TimeoutError:  # TimeoutError is catched due to timeout
+            except TimeoutError:  # TimeoutError is caught due to timeout
                 # what to do after timeout:
-                if self.deleteAfterTimeout and not self.hidden:
-                    await msg.edit(components=None)
-                elif self.disableAfterTimeout and not self.hidden:
-                    await msg.edit(components=self.disabled())
+                try:
+                    if self.deleteAfterTimeout and not self.hidden:
+                        await msg.edit(components=None)
+                    elif self.disableAfterTimeout and not self.hidden:
+                        await msg.edit(components=self.disabled())
+                except NotFound:
+                    pass
                 # returns useful data:
                 return TimedOut(
                     self.ctx,
@@ -478,7 +490,7 @@ class Paginator:
                 )
         select = create_select(
             options=select_options,
-            custom_id=f"select",
+            custom_id="select",
             placeholder=f"{self.labels[2]} {self.index}/{self.top}",  # shows the index
             min_values=1,
             max_values=1,
@@ -493,7 +505,7 @@ class Paginator:
             create_button(  # previous button
                 style=self.styles[1],
                 label=self.labels[1],
-                custom_id=f"prev",
+                custom_id="prev",
                 disabled=disableLeft,
                 emoji=self.emojis[1],
             ),
@@ -505,7 +517,7 @@ class Paginator:
             create_button(  # next button
                 style=self.styles[3],
                 label=self.labels[3],
-                custom_id=f"next",
+                custom_id="next",
                 disabled=disableRight,
                 emoji=self.emojis[2],
             ),
@@ -518,7 +530,7 @@ class Paginator:
                 create_button(  # first page button
                     style=self.styles[0],
                     label=self.labels[0],
-                    custom_id=f"first",
+                    custom_id="first",
                     disabled=disableLeft,
                     emoji=self.emojis[0],
                 ),
@@ -527,7 +539,7 @@ class Paginator:
                 create_button(  # last page button
                     style=self.styles[4],
                     label=self.labels[4],
-                    custom_id=f"last",
+                    custom_id="last",
                     disabled=disableRight,
                     emoji=self.emojis[3],
                 )
@@ -545,12 +557,9 @@ class Paginator:
             elif not self.useOverflow:
                 raise TooManyButtons()
         if self.useCustomButton:
-            customButton = create_button(  # custom disabled button
-                style=self.custom[0],
-                label=self.custom[1],
-                disabled=True,
-                emoji=self.custom[2],
-            )
+            customButton = self.customButton[0]  # custom button
+            if customButton["custom_id"] != "customButton":
+                customButton["custom_id"] = "customButton"
             # appends the button only if there is space in the action row:
             if len(controlButtons) < 5:
                 controlButtons.append(customButton)
@@ -562,7 +571,7 @@ class Paginator:
                 style=self.quit[0],
                 label=self.quit[1],
                 emoji=self.quit[2],
-                custom_id=f"quit",
+                custom_id="quit",
             )
             # appends the button only if there is space in the action row:
             if len(controlButtons) < 5:
@@ -585,12 +594,9 @@ class Paginator:
             controlButtons.append(linkButton) if len(controlButtons) < 5 else None
         # checks if button is not already in self.buttons():
         if self.useCustomButton and not self.usedCustom:
-            customButton = create_button(  # custom disabled button
-                style=self.custom[0],
-                label=self.custom[1],
-                disabled=True,
-                emoji=self.custom[2],
-            )
+            customButton = self.customButton[0]  # custom button
+            if customButton["custom_id"] != "customButton":
+                customButton["custom_id"] = "customButton"
             controlButtons.append(customButton) if len(controlButtons) < 5 else None
         # checks if button is not already in self.buttons():
         if self.useQuitButton and not self.usedCustom:
@@ -598,7 +604,7 @@ class Paginator:
                 style=self.quit[0],
                 label=self.quit[1],
                 emoji=self.quit[2],
-                custom_id=f"quit",
+                custom_id="quit",
             )
             controlButtons.append(quitButton) if len(controlButtons) < 5 else None
         return None if controlButtons == [] else create_actionrow(*controlButtons)
