@@ -1,5 +1,7 @@
 # dinteractions-Paginator
 
+<img src="https://cdn.discordapp.com/attachments/871853650568417310/893303845587931176/dinteractions-Paginator_noloop.gif"></img>
+
 Unofficial discord-interactions multi-page embed handler
 
 [![Discord](https://img.shields.io/discord/859508565101248582?color=blue&label=discord&style=for-the-badge)](https://discord.gg/UYCaSsMewk) [![PyPI - Downloads](https://img.shields.io/pypi/dm/dinteractions-Paginator?color=blue&style=for-the-badge)](https://pypi.org/project/dinteractions-Paginator/)
@@ -31,7 +33,7 @@ Unofficial discord-interactions multi-page embed handler
 
 ### Join our [Discord server](https://discord.gg/UYCaSsMewk)!
 
-- Try out all the possible combinations of the paginator with `/example1` and `/example2`,
+- Try out example commands,
 - Ask some questions,
 - And give us feedback and suggestions!
 
@@ -144,10 +146,10 @@ bot.run("token")
     - [Emojis](#emojis)
     - [Styles](#styles)
 - [Returns](#returns)
-- [customActionRow](#howtocustom)
-    - [Example code](#customcode)
+- [Custom buttons](#howtocustom)
+    - [Example customButton](#cusbut)
+    - [Example customActionRow](#cusact)
     - [Example GIF](#customgif)
-    - [Template](#customtemplate)
 
 ### <a name="req"></a> Required:
 
@@ -173,6 +175,13 @@ bot.run("token")
 - `dm` - `Optional[bool]`: if you want the paginator to be DM'ed, default `False`
 - `customActionRow` - `Optional[List[Union[dict, Callable]]]`: a custom action row, see [this](#howtocustom) for more
   info, defaults to `None`
+
+#### <a name="customstuff"></a> Custom:
+
+- `customButton` - `Optional[List[Union[dict, Awaitable]]]`: a list of a create_button(...) and an awaitable function, default `None`
+- `customButton` - `Optional[List[Union[dict, Awaitable]]]`: a list of an action row and an awaitable function, default `None`
+
+See how to use these args [here](#howtocustom)!
 
 #### <a name="time"></a> Time:
 
@@ -203,7 +212,6 @@ bot.run("token")
 - `lastLabel` - `Optional[str]`: The label of the button used to go to the last page, defaults to `""`
 - `linkLabel` - `Optional[Union[str, List[str]]]`: The label for the link button
 - `linkURL` - `Optional[Union[str, List[str]]]`: The URL(s) for the link button
-- `customButtonLabel` - `Optional[str]`: The label of a custom disabled button, default `None`
 - `quitButtonLabel` - `Optional[str]`: The label of the quit button, default `"Quit"`
 
 #### <a name="emojis"></a> Emojis:
@@ -216,8 +224,6 @@ bot.run("token")
   button used to go to the next page, defaults to `"▶"`
 - `lastEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, str]`: emoji of the
   button used to go to the last page, defaults to `"⏭️"`
-- `customButtonEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, str]`: emoji of
-  the custom disabled button, defaults to `None`
 - `quitButtonEmoji` - `Optional[Union[discord.emoji.Emoji, discord.partial_emoji.PartialEmoji, dict, str]`: emoji of the
   quit button, defaults to `None`
 
@@ -233,8 +239,6 @@ bot.run("token")
   defaults to `1` (`ButtonStyle.blue`)
 - `lastStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the last button,
   defaults to `1` (`ButtonStyle.blue`)
-- `customButtonStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the custom
-  disabled button, defaults to `2` (`ButtonStyle.gray`)
 - `quitButtonStyle` - `Optional[Union[ButtonStyle, int]]`: the style of button (`ButtonStyle` or `int`) for the quit
   button, defaults to `4` (`ButtonStyle.red`)
 
@@ -242,11 +246,50 @@ bot.run("token")
 
 [*class* TimedOut](#timed)
 
-### <a name="howtocustom"></a> More info on `customActionRow`:
+### <a name="howtocustom"></a> More info on `customButton` and `customActionRow`:
 
-You can define your own custom action row, with its own code!
+#### <a name="cusbut"></a> You can define your own custom button, with its own code!
 
-#### <a name="customcode"></a> Example code:
+##### <a name="cusbutcode"></a> Example code:
+
+```py
+@slash.slash(name="custom-action-row")
+async def _custom_action_row(ctx: SlashContext):
+    # Embeds:
+    pages = [
+        discord.Embed(title="1"),
+        discord.Embed(title="2"),
+        discord.Embed(title="3"),
+        discord.Embed(title="4"),
+        discord.Embed(title="5"),
+    ]
+
+    # Custom button:
+    custom_button = create_button(style=3, label="A Green Button")
+
+    # Function:
+    async def custom_function(self, button_ctx):  # Required arguments
+        await button_ctx.send("test", hidden=True)
+        await self.ctx.send("lol")
+
+    # Paginator:
+    await Paginator(
+        bot,
+        ctx,
+        pages,
+        timeout=60,
+        customButton=[
+            custom_button,
+            custom_function,
+        ],  # Note that custom_function is not called
+    ).run()
+```
+
+The code above runs a normal paginator, with 1 extra action row at the bottom!
+
+#### <a name="cusact"></a> You can define your own custom action row, with its own code!
+
+##### <a name="cusactcode"></a> Example code:
 
 ```py
 @slash.slash(name="custom-action-row")
@@ -267,7 +310,7 @@ async def _custom_action_row(ctx: SlashContext):
     custom_action_row = create_actionrow(*buttons)
 
     # Function:
-    async def custom_function(self, button_ctx):
+    async def custom_function(self, button_ctx):  # Required arguments
         await button_ctx.send("test", hidden=True)
         await self.ctx.send("lol")
 
@@ -288,32 +331,10 @@ The code above runs a normal paginator, with 1 extra action row at the bottom!
 
 #### <a name="customgif"></a> Example GIF:
 
-<img src="https://cdn.discordapp.com/attachments/871853650568417310/884243305947340820/pDQZld6v19.gif"></img>
+<img src="http://can-you-pls.just-click.download/r/ku7l7zjoc9a.gif"></img>
 
 You can access all of the attributes of [*class* Paginator](#paginator) with `self`, such as the original command's
 context (`self.ctx`), the bot variable (`self.bot`), and other things that you passed into it!
-
-#### <a name="customtemplate"></a> Template:
-
-```py
-# <-- Your decorator here
-# ...
-buttons = [
-    create_button(style=3, label="A Green Button"),
-    ...  # Your buttons
-]
-custom_action_row = create_actionrow(*buttons)
-
-
-# Function:
-async def custom_function(self, button_ctx):
-    pass  # Your code for the action row here
-    # You could check for each button and decide
-    # what to do
-
-
-await Paginator(..., customActionRow=[custom_action_row, custom_function]).run()
-```
 
 ------------------------------
 
