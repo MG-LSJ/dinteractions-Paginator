@@ -76,6 +76,7 @@ class Paginator:
         timeout: Optional[int] = None,
         disableAfterTimeout: Optional[bool] = True,
         deleteAfterTimeout: Optional[bool] = False,
+        useEmoji: Optional[bool] = True,
         useSelect: Optional[bool] = True,
         useButtons: Optional[bool] = True,
         useIndexButton: Optional[bool] = None,
@@ -117,6 +118,7 @@ class Paginator:
         self.timeout = timeout
         self.disableAfterTimeout = disableAfterTimeout
         self.deleteAfterTimeout = deleteAfterTimeout
+        self.useEmoji = useEmoji
         self.useSelect = useSelect
         self.useButtons = useButtons
         self.useIndexButton = useIndexButton
@@ -128,7 +130,7 @@ class Paginator:
         self.labels = [firstLabel, prevLabel, indexLabel, nextLabel, lastLabel]
         self.links = [linkLabel, linkURL]
         self.quit = [quitButtonStyle, quitButtonLabel, quitButtonEmoji]
-        self.emojis = [firstEmoji, prevEmoji, nextEmoji, lastEmoji]
+        self.emojis = [firstEmoji, prevEmoji, nextEmoji, lastEmoji] if useEmoji else [None,None,None,None]
         self.styles = [firstStyle, prevStyle, indexStyle, nextStyle, lastStyle]
         self.customButton = customButton
         self.customActionRow = customActionRow
@@ -184,6 +186,7 @@ class Paginator:
         bools = {
             "disableAfterTimeout": self.disableAfterTimeout,
             "deleteAfterTimeout": self.deleteAfterTimeout,
+            "useEmoji": self.useEmoji,
             "useSelect": self.useSelect,
             "useButtons": self.useButtons,
             "useLinkButton": self.useLinkButton,
