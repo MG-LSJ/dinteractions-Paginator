@@ -198,7 +198,7 @@ class Paginator:
         self.incdata(
             bools,
             None,
-            (bool, type(None),
+            bool,
             "bool",
         )
         self.incdata("useIndexButton", self.useIndexButton, (bool, type(None)), "bool")
@@ -233,8 +233,8 @@ class Paginator:
         self.incdata(
             emojis,
             None,
-            (Emoji, PartialEmoji, dict, str),
-            "Emoji, PartialEmoji, dict, or str",
+            (Emoji, PartialEmoji, dict, str, type(None)),
+            "Emoji, PartialEmoji, dict, str, or None",
         )
         styles = {
             "firstStyle": firstStyle,
