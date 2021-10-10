@@ -129,8 +129,8 @@ class Paginator:
         self.useNotYours = useNotYours
         self.labels = [firstLabel, prevLabel, indexLabel, nextLabel, lastLabel]
         self.links = [linkLabel, linkURL]
-        self.quit = [quitButtonStyle, quitButtonLabel, quitButtonEmoji]
-        self.emojis = [firstEmoji, prevEmoji, nextEmoji, lastEmoji] if useEmoji else [None,None,None,None]
+        self.quit = [quitButtonStyle, quitButtonLabel, quitButtonEmoji if useEmoji else None]
+        self.emojis = [firstEmoji, prevEmoji, nextEmoji, lastEmoji] if useEmoji else [None, None, None, None]
         self.styles = [firstStyle, prevStyle, indexStyle, nextStyle, lastStyle]
         self.customButton = customButton
         self.customActionRow = customActionRow
