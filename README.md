@@ -179,7 +179,7 @@ bot.run("token")
 #### <a name="customstuff"></a> Custom:
 
 - `customButton` - `Optional[List[Union[dict, Awaitable]]]`: a list of a create_button(...) and an awaitable function, default `None`
-- `customButton` - `Optional[List[Union[dict, Awaitable]]]`: a list of an action row and an awaitable function, default `None`
+- `customActionRow` - `Optional[List[Union[dict, Awaitable]]]`: a list of an action row and an awaitable function, default `None`
 
 See how to use these args [here](#howtocustom)!
 
