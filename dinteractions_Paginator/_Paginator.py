@@ -198,7 +198,7 @@ class Paginator:
         self.incdata(
             bools,
             None,
-            bool,
+            (bool, type(None),
             "bool",
         )
         self.incdata("useIndexButton", self.useIndexButton, (bool, type(None)), "bool")
