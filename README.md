@@ -192,6 +192,7 @@ See how to use these args [here](#howtocustom)!
 
 #### <a name="what"></a> What to use:
 
+- `useEmoji` - `Optional[bool]`: uses the emoji, default is `True`
 - `useButtons` - `Optional[bool]`: uses buttons, default is `True`
 - `useSelect` - `Optional[bool]`: uses a select, default is `True`
 - `useIndexButton` - `Optional[bool]`: uses the index button, default is `False` and stays `False` if `useButtons` is
