@@ -167,14 +167,13 @@ bot.run("token")
 - `pages` - `Optional[List[discord.Embed]]`: the list of embeds to be paginated, defaults to `None` and paginates `content` instead
   <br>NOTE: `content` must be a list for paginating without `pages`!
 - `content` - `Optional[Union[str, List[str]]]`: the content of the message to send, defaults to `None`
+- `editOnMessage` - `Optional[discord.Message]`: paginate in the specified message, defaults to `False`
 - `files` - `Optional[Union[discord.File, List[discord.File]]]`: files to send, defaults to `None`
 - `hidden` - `Optional[bool]`: if you want the paginator to be hidden, default `False`
 - `authorOnly` - `Optional[bool]`: if you want the paginator to work for the author only, default is `False`
 - `onlyFor` - `Optional[Union[discord.User, discord.Role, List[Union[discord.User, discord.Role]]]]`: components only
   for specified user(s) or role(s)
 - `dm` - `Optional[bool]`: if you want the paginator to be DM'ed, default `False`
-- `customActionRow` - `Optional[List[Union[dict, Callable]]]`: a custom action row, see [this](#howtocustom) for more
-  info, defaults to `None`
 
 #### <a name="customstuff"></a> Custom:
 
@@ -188,7 +187,8 @@ See how to use these args [here](#howtocustom)!
 - `timeout` - `Optional[int]`: deactivates paginator after inactivity if enabled, defaults to `None` (meaning no
   timeout)
 - `disableAfterTimeout` - `Optional[bool]`: disable components after `timeout`, default `True`
-- `deleteAfterTimeout` - `Opti onal[bool]`: delete components after `timeout`, default `False`
+- `deleteAfterTimeout` - `Optional[bool]`: delete components after `timeout`, default `False`
+- `timeoutEmbed` - `Optional[discord.Embed]`: edit to embed after `timeout`, defaults to `False`
 
 #### <a name="what"></a> What to use:
 
@@ -203,6 +203,8 @@ See how to use these args [here](#howtocustom)!
 - `useOverflow` - `Optional[bool]`: uses the overflow action row if there are too many buttons, default `True`
 - `useNotYours` - `Optional[bool]`: sends an ephemeral (hidden) message if the paginator is not yours (see authorOnly or
   onlyFor), default `True`
+- `notYoursMessage` - `Optional[str]`: the message to send if the paginator is not yours (see authorOnly or onlyFor),
+  default `"this paginator is not for you!"`
 
 #### <a name="labels"></a> Labels:
 
@@ -330,11 +332,18 @@ async def _custom_action_row(ctx: SlashContext):
 
 The code above runs a normal paginator, with 1 extra action row at the bottom!
 
+
+FYI: You can also use `customButton` and `customActionRow` together!
+Also, you can do `self.stop = True` in the custom function to stop the paginator.
+
+You can use the paginator method `self.goToPage(page)` to go to the specific page number in the message.
+The parameter `page` is the page number, starting from 1.
+
 #### <a name="customgif"></a> Example GIF:
 
 <img src="http://can-you-pls.just-click.download/r/ku7l7zjoc9a.gif"></img>
 
-You can access all of the attributes of [*class* Paginator](#paginator) with `self`, such as the original command's
+You can access all the attributes of [*class* Paginator](#paginator) with `self`, such as the original command's
 context (`self.ctx`), the bot variable (`self.bot`), and other things that you passed into it!
 
 ------------------------------
