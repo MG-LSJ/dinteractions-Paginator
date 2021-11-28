@@ -1,8 +1,8 @@
 from asyncio import TimeoutError, get_running_loop
-from time import time
+from time import perf_counter
 from typing import List, Optional, Union, Awaitable
 
-from discord import Embed, Emoji, Member, PartialEmoji, Role, User, File
+from discord import Embed, Emoji, Member, Message, PartialEmoji, Role, User, File
 from discord.abc import User as userUser
 from discord.channel import TextChannel
 from discord.ext.commands import AutoShardedBot, Bot, Context
@@ -60,6 +60,7 @@ class Paginator:
         ],
         pages: Optional[List[Embed]] = None,
         content: Optional[Union[str, List[str]]] = None,
+        editOnMessage: Optional[Message] = False,
         files: Optional[Union[File, List[File]]] = None,
         hidden: Optional[bool] = False,
         authorOnly: Optional[bool] = False,
@@ -76,6 +77,7 @@ class Paginator:
         timeout: Optional[int] = None,
         disableAfterTimeout: Optional[bool] = True,
         deleteAfterTimeout: Optional[bool] = False,
+        timeoutEmbed: Optional[Embed] = None,
         useEmoji: Optional[bool] = True,
         useSelect: Optional[bool] = True,
         useButtons: Optional[bool] = True,
@@ -85,6 +87,7 @@ class Paginator:
         useFirstLast: Optional[bool] = True,
         useOverflow: Optional[bool] = True,
         useNotYours: Optional[bool] = True,
+        notYoursMessage: Optional[str] = "this paginator is not for you!",
         firstLabel: Optional[str] = "",
         prevLabel: Optional[str] = "",
         indexLabel: Optional[str] = "Page",
@@ -110,6 +113,7 @@ class Paginator:
         self.ctx = ctx
         self.pages = [pages] if isinstance(pages, type(None)) else pages
         self.content = content
+        self.editOnMessage = editOnMessage
         self.files = files if isinstance(files, (list, type(None))) else [files]
         self.hidden = hidden
         self.authorOnly = authorOnly
@@ -118,6 +122,7 @@ class Paginator:
         self.timeout = timeout
         self.disableAfterTimeout = disableAfterTimeout
         self.deleteAfterTimeout = deleteAfterTimeout
+        self.timeoutEmbed = timeoutEmbed
         self.useEmoji = useEmoji
         self.useSelect = useSelect
         self.useButtons = useButtons
@@ -127,10 +132,19 @@ class Paginator:
         self.useFirstLast = useFirstLast
         self.useOverflow = useOverflow
         self.useNotYours = useNotYours
+        self.notYoursMessage = notYoursMessage
         self.labels = [firstLabel, prevLabel, indexLabel, nextLabel, lastLabel]
         self.links = [linkLabel, linkURL]
-        self.quit = [quitButtonStyle, quitButtonLabel, quitButtonEmoji if useEmoji else None]
-        self.emojis = [firstEmoji, prevEmoji, nextEmoji, lastEmoji] if useEmoji else [None, None, None, None]
+        self.quit = [
+            quitButtonStyle,
+            quitButtonLabel,
+            quitButtonEmoji if useEmoji else None,
+        ]
+        self.emojis = (
+            [firstEmoji, prevEmoji, nextEmoji, lastEmoji]
+            if useEmoji
+            else [None, None, None, None]
+        )
         self.styles = [firstStyle, prevStyle, indexStyle, nextStyle, lastStyle]
         self.customButton = customButton
         self.customActionRow = customActionRow
@@ -154,6 +168,7 @@ class Paginator:
         self.failedUsers = []
         self.usedLink = self.usedCustom = self.usedQuit = False
         self.index = 1
+        self.stop = False
 
         # error handling:
         self.incdata(
@@ -171,6 +186,12 @@ class Paginator:
         self.incdata("pages", self.pages, list, "List[discord.Embed]")
         self.incdata(
             "content", self.content, (list, str, type(None)), "str or list(str)"
+        )
+        self.incdata(
+            "editOnMessage",
+            self.editOnMessage,
+            (Message, type(None)),
+            "discord.Message",
         )
         self.incdata("files", self.files, (list, type(None)), "List[discord.File]")
         self.incdata("hidden", self.hidden, bool, "bool")
@@ -262,6 +283,18 @@ class Paginator:
             (list, type(None)),
             "a list with the action row, then the awaitable function",
         )
+        self.incdata(
+            "notYoursMessage",
+            self.notYoursMessage,
+            (str, type(None)),
+            "str",
+        )
+        self.incdata(
+            "timeoutEmbed",
+            self.timeoutEmbed,
+            (Embed, type(None)),
+            "discord.Embed",
+        )
         self.multiContent = type(self.content) == list
         self.multiLabel = type(self.links[0]) == list
         self.multiURL = type(self.links[1]) == list
@@ -308,6 +341,13 @@ class Paginator:
                     "InteractionContext, commands.Context, or user for dm=True",
                     self.ctx,
                 )
+        elif self.editOnMessage:
+            await self.editOnMessage.edit(
+                content=self.content[0] if self.multiContent else self.content,
+                embed=self.pages[0],
+                components=self.components(),
+            )
+            msg = self.editOnMessage
         else:
             msg = (
                 await self.ctx.send(
@@ -326,10 +366,31 @@ class Paginator:
                 )
             )
         # more useful variables:
-        start = time()
+        start = perf_counter()
         buttonContext = None
         # loop:
         while True:
+            if self.stop:  # if self.stop == True
+                # what to do after timeout:
+                try:
+                    if self.deleteAfterTimeout and not self.hidden:
+                        await msg.edit(components=None)
+                    elif self.disableAfterTimeout and not self.hidden:
+                        await msg.edit(components=self.disabled())
+                except NotFound:
+                    pass
+                # returns useful data:
+                return TimedOut(
+                    self.ctx,
+                    buttonContext,
+                    round(perf_counter() - start),
+                    self.content
+                    if isinstance(self.content, (str, type(None)))
+                    else self.content[self.index - 1],
+                    self.pages[self.index - 1] if self.embeds else None,
+                    self.successfulUsers,
+                    self.failedUsers,
+                )
             try:  # to catch TimeoutError if timeout
                 buttonContext: ComponentContext = await wait_for_component(
                     self.bot,
@@ -355,11 +416,28 @@ class Paginator:
                     self.index = int(buttonContext.selected_options[0])
                 # quit button:
                 elif buttonContext.custom_id == "quit":
-                    end = time()
-                    if self.deleteAfterTimeout and not self.hidden:
-                        await buttonContext.edit_origin(components=None)
-                    elif self.disableAfterTimeout and not self.hidden:
-                        await buttonContext.edit_origin(components=self.disabled())
+                    end = perf_counter()
+                    try:
+                        if not self.timeoutEmbed:
+                            if self.deleteAfterTimeout and not self.hidden:
+                                await buttonContext.edit_origin(components=None)
+                            elif self.disableAfterTimeout and not self.hidden:
+                                await buttonContext.edit_origin(
+                                    components=self.disabled()
+                                )
+                        else:
+                            if self.deleteAfterTimeout and not self.hidden:
+                                await buttonContext.edit_origin(
+                                    components=None, embed=self.timeoutEmbed
+                                )
+                            elif self.disableAfterTimeout and not self.hidden:
+                                await buttonContext.edit_origin(
+                                    components=self.disabled(), embed=self.timeoutEmbed
+                                )
+                    except NotFound:
+                        pass
+                    if not buttonContext.responded:
+                        await buttonContext.defer(ignore=True)
                     timeTaken = round(end - start)
                     lastContent = (
                         self.content
@@ -380,10 +458,14 @@ class Paginator:
                 elif buttonContext.custom_id == "customButton":
                     if self.customButton is not None:
                         await self.customButton[1](self, buttonContext)
+                    if not buttonContext.responded:
+                        await buttonContext.defer(ignore=True)
                     continue
                 # uses the customActionRow
                 elif self.customActionRow is not None:
                     await self.customActionRow[1](self, buttonContext)
+                    if not buttonContext.responded:
+                        await buttonContext.defer(ignore=True)
                     continue
                 # finally edits based on changed values
                 await buttonContext.edit_origin(
@@ -396,17 +478,25 @@ class Paginator:
             except TimeoutError:  # TimeoutError is caught due to timeout
                 # what to do after timeout:
                 try:
-                    if self.deleteAfterTimeout and not self.hidden:
-                        await msg.edit(components=None)
-                    elif self.disableAfterTimeout and not self.hidden:
-                        await msg.edit(components=self.disabled())
+                    if not self.timeoutEmbed:
+                        if self.deleteAfterTimeout and not self.hidden:
+                            await msg.edit(components=None)
+                        elif self.disableAfterTimeout and not self.hidden:
+                            await msg.edit(components=self.disabled())
+                    else:
+                        if self.deleteAfterTimeout and not self.hidden:
+                            await msg.edit(components=None, embed=self.timeoutEmbed)
+                        elif self.disableAfterTimeout and not self.hidden:
+                            await msg.edit(
+                                components=self.disabled(), embed=self.timeoutEmbed
+                            )
                 except NotFound:
                     pass
                 # returns useful data:
                 return TimedOut(
                     self.ctx,
                     buttonContext,
-                    round(time() - start),
+                    round(perf_counter() - start),
                     self.content
                     if isinstance(self.content, (str, type(None)))
                     else self.content[self.index - 1],
@@ -453,7 +543,7 @@ class Paginator:
                 if self.useNotYours:
                     get_running_loop().create_task(
                         buttonContext.send(
-                            f"{buttonContext.author.mention}, this paginator is not for you!",
+                            f"{buttonContext.author.mention}, {self.notYoursMessage}",
                             hidden=True,
                         )
                     )
@@ -579,7 +669,7 @@ class Paginator:
             # appends the button only if there is space in the action row:
             if len(controlButtons) < 5:
                 controlButtons.append(quitButton)
-                self.usedCustom = True
+                self.usedQuit = True
             elif not self.useOverflow:
                 raise TooManyButtons()
         return create_actionrow(*controlButtons)
@@ -602,7 +692,7 @@ class Paginator:
                 customButton["custom_id"] = "customButton"
             controlButtons.append(customButton) if len(controlButtons) < 5 else None
         # checks if button is not already in self.buttons():
-        if self.useQuitButton and not self.usedCustom:
+        if self.useQuitButton and not self.usedQuit:
             quitButton = create_button(  # quit button
                 style=self.quit[0],
                 label=self.quit[1],
@@ -661,3 +751,11 @@ class Paginator:
             for component in row["components"]:
                 component["disabled"] = True
         return components
+
+    # lets you go to a specific page:
+    def goToPage(self, page: int) -> None:
+        if page < 1:
+            page = 1
+        elif page > self.top:
+            page = self.top
+        self.index = page
