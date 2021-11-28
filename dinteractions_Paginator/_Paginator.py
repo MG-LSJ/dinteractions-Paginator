@@ -190,7 +190,7 @@ class Paginator:
         self.incdata(
             "editOnMessage",
             self.editOnMessage,
-            (Message, type(None)),
+            (Message, bool),
             "discord.Message",
         )
         self.incdata("files", self.files, (list, type(None)), "List[discord.File]")
