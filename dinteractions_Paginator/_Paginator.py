@@ -190,7 +190,7 @@ class Paginator:
         self.incdata(
             "editOnMessage",
             self.editOnMessage,
-            (Message, bool),
+            (Message, type(None)),
             "discord.Message",
         )
         self.incdata("files", self.files, (list, type(None)), "List[discord.File]")
@@ -512,7 +512,7 @@ class Paginator:
             if self.useNotYours:  # whether or not to send hidden message
                 get_running_loop().create_task(
                     buttonContext.send(
-                        f"{buttonContext.author.mention}, this paginator is not for you!",
+                        f"{buttonContext.author.mention}, {self.notYoursMessage}",
                         hidden=True,
                     )
                 )
