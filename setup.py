@@ -1,6 +1,7 @@
 from setuptools import setup
-with open("README.md","r",encoding="utf-8") as fh:
-    long_description=fh.read()
+
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
 
 setup(
     name="dinteractions_Paginator",
@@ -19,5 +20,5 @@ setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
     ],
-    install_requires=["discord-py-interactions", "discord.py"],
+    install_requires=["discord-py-interactions"],
 )

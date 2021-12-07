@@ -594,8 +594,8 @@ class Paginator:
     def disabled(self) -> list:
         components = self.components()
         for row in components:
-            for component in row["components"]:
-                component["disabled"] = True
+            for component in row.components:
+                component.disabled = True
         return components
 
     # lets you go to a specific page:
