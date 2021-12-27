@@ -215,7 +215,9 @@ class Paginator:
     # main:
     async def run(self) -> TimedOut:
         # sending the message based on context and dm:
+        print("start")
         if self.dm:
+            print("dm")
             if isinstance(self.ctx, (CommandContext, Context, ComponentContext)):
                 self.msg = await self.ctx.author.send(
                     content=self.content[0] if self.multiContent else self.content,
@@ -238,6 +240,7 @@ class Paginator:
                     self.ctx,
                 )
         elif self.editOnMessage:
+            print("edit")
             await self.editOnMessage.edit(
                 content=self.content[0] if self.multiContent else self.content,
                 embeds=self.pages[0],
@@ -245,6 +248,7 @@ class Paginator:
             )
             self.msg = self.editOnMessage
         else:
+            print("send")
             self.msg = (
                 await self.ctx.send(
                     content=self.content[0] if self.multiContent else self.content,
@@ -259,12 +263,10 @@ class Paginator:
                     components=self.components(),
                 )
             )
-        for component in ["first", "prev", "next", "last"]:
-            self.bot.websocket.dispatch.register(self.componentCallback, name=component)
         # more useful variables:
         self.start = perf_counter()
-        timer = self.timeout
         # loop:
+        print("entering loop")
         while True:
             try:
                 self.buttonContext: ComponentContext = (
@@ -294,15 +296,20 @@ class Paginator:
 
     # component callback:
     async def componentCallback(self, buttonContext: ComponentContext):
+        print("hi")
         self.buttonContext = buttonContext
         customID = buttonContext.custom_id
         if self.timedOut:
+            print("bye")
             return
         elif self.stop:
+            print("bye")
             return
         elif buttonContext.message.id != self.msg.id:
+            print("bye")
             return
         elif not self.check(buttonContext):
+            print("bye")
             return
         if customID == f"first{self.id}":
             self.index = 1
@@ -334,7 +341,7 @@ class Paginator:
             except HTTPException:
                 pass
             if not buttonContext.responded:
-                await buttonContext.defer(ignore=True)
+                await buttonContext.defer(edit_origin=True)
             timeTaken = round(end - self.start)
             lastContent = (
                 self.content
@@ -342,6 +349,7 @@ class Paginator:
                 else self.content[self.index - 1]
             )
             lastEmbed = self.pages[self.index - 1] if self.embeds else None
+            print("bye")
             return TimedOut(
                 self.ctx,
                 buttonContext,
@@ -357,12 +365,14 @@ class Paginator:
                 await self.customButton[1](self, buttonContext)
             if not buttonContext.responded:
                 await buttonContext.defer(ignore=True)
+            print("bye")
             return
             # uses the customActionRow
         elif self.customActionRow is not None:
             await self.customActionRow[1](self, buttonContext)
             if not buttonContext.responded:
                 await buttonContext.defer(ignore=True)
+            print("bye")
             return
             # finally edits based on changed values
         await buttonContext.edit_origin(
@@ -370,6 +380,7 @@ class Paginator:
             embed=self.pages[self.index - 1] if self.embeds else None,
             components=self.components(),
         )
+        print("done")
 
     # check for wait_for_component() in self.run()
     def check(self, buttonContext: ComponentContext) -> bool:
