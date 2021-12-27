@@ -1,7 +1,7 @@
 from asyncio import get_running_loop, sleep
 from random import randint
 from time import perf_counter
-from typing import List, Optional, Union, Coroutine, Type
+from typing import List, Optional, Union, Coroutine, Type, Callable
 
 from interactions import (
     Embed,
@@ -207,7 +207,7 @@ class Paginator:
                 raise TooManyFiles
 
         try:
-            if isinstance(self.bot.wait_for_component, function):
+            if isinstance(self.bot.wait_for_component, Coroutine):
                 pass
         except AttributeError:
             setup(self.bot, add_method=True)
