@@ -206,8 +206,11 @@ class Paginator:
             if len(self.files) > 10:
                 raise TooManyFiles
 
-        if isinstance(self.bot.wait_for_component, function):
-            pass
+        try:
+            if isinstance(self.bot.wait_for_component, function):
+                pass
+        except AttributeError:
+            setup(self.bot, add_method=True)
 
     # main:
     async def run(self) -> TimedOut:
@@ -264,14 +267,15 @@ class Paginator:
         # loop:
         while True:
             try:
-                self.buttonContext: ComponentContext = await wait_for_component(
-                    self.bot,
-                    components=[
-                        f"first{self.id}",
-                        f"prev{self.id}",
-                        f"next{self.id}",
-                        f"last{self.id}",
-                    ],
+                self.buttonContext: ComponentContext = (
+                    await self.bot.wait_for_component(
+                        components=[
+                            f"first{self.id}",
+                            f"prev{self.id}",
+                            f"next{self.id}",
+                            f"last{self.id}",
+                        ],
+                    )
                 )
             except TimeoutError:
                 self.timedOut = True
