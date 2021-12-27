@@ -250,7 +250,7 @@ class Paginator:
         else:
             print("send")
             for ar in self.components():
-                print(component for component in ar.components)
+                print(component.custom_id for component in ar.components)
             self.msg = (
                 await self.ctx.send(
                     content=self.content[0] if self.multiContent else self.content,
