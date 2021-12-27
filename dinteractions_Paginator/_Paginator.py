@@ -462,7 +462,7 @@ class Paginator:
                 )
         select = SelectMenu(
             options=select_options,
-            custom_id="select",
+            custom_id=f"select{self.id}",
             placeholder=f"{self.labels[2]} {self.index}/{self.top}",  # shows the index
             min_values=1,
             max_values=1,
@@ -484,6 +484,7 @@ class Paginator:
             Button(  # index button
                 style=self.styles[2],
                 label=f"{self.labels[2]} {self.index}/{self.top}",
+                custom_id=f"index{self.id}",
                 disabled=True,
             ),
             Button(  # next button
@@ -576,7 +577,7 @@ class Paginator:
                 style=self.quit[0],
                 label=self.quit[1],
                 emoji=self.quit[2],
-                custom_id="quit",
+                custom_id=f"quit{self.id}",
             )
             controlButtons.append(quitButton) if len(controlButtons) < 5 else None
         return None if controlButtons == [] else ActionRow(components=controlButtons)
