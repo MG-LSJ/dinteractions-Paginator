@@ -24,9 +24,9 @@ from interactions.models.component import (
     SelectOption,
 )
 
-from interactions.ext.wait_for import wait_for_component
+from interactions.ext.wait_for import setup
 
-from errors import BadButtons, BadOnly, IncorrectDataType, TooManyButtons, TooManyFiles
+from .errors import BadButtons, BadOnly, IncorrectDataType, TooManyButtons, TooManyFiles
 
 
 class TimedOut:
@@ -205,6 +205,9 @@ class Paginator:
         if isinstance(self.files, list):
             if len(self.files) > 10:
                 raise TooManyFiles
+
+        if isinstance(self.bot.wait_for_component, function):
+            pass
 
     # main:
     async def run(self) -> TimedOut:
