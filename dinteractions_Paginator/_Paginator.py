@@ -250,7 +250,8 @@ class Paginator:
         else:
             print("send")
             for ar in self.components():
-                print(component.custom_id for component in ar.components)
+                for component in ar.components:
+                    print(component.custom_id)
             self.msg = (
                 await self.ctx.send(
                     content=self.content[0] if self.multiContent else self.content,
@@ -258,7 +259,7 @@ class Paginator:
                     components=self.components(),
                     ephemeral=self.hidden,
                 )
-                if isinstance(self.ctx, CommandContext)
+                if isinstance(self.ctx, (CommandContext, ComponentContext))
                 else await self.ctx.send(
                     content=self.content[0] if self.multiContent else self.content,
                     embeds=self.pages[0],
