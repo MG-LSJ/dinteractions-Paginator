@@ -249,7 +249,14 @@ class Paginator:
             self.msg = self.editOnMessage
         else:
             print("send")
-            print(self.components())
+            print(
+                f"""
+content={self.content[0] if self.multiContent else self.content}
+embeds={self.pages[0]}
+components={self.components()}
+ephemeral={self.hidden}
+"""
+            )
             self.msg = (
                 await self.ctx.send(
                     content=self.content[0] if self.multiContent else self.content,
