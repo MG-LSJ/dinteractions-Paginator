@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="dinteractions_Paginator",
-    version="1.5.1",
+    version="2.0.0a1",
     description="Unofficial discord-interactions multi page embed handler",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -20,5 +20,5 @@ setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
     ],
-    install_requires=["discord-py-interactions"],
+    install_requires=["discord-py-interactions", "interactions-wait-for"],
 )
