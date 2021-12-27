@@ -454,7 +454,7 @@ class Paginator:
             min_values=1,
             max_values=1,
         )
-        return ActionRow(components=select)
+        return ActionRow(select)
 
     # buttons:
     def buttons_row(self) -> ActionRow:
@@ -538,7 +538,7 @@ class Paginator:
                 self.usedQuit = True
             elif not self.useOverflow:
                 raise TooManyButtons()
-        return ActionRow(components=controlButtons)
+        return ActionRow(*controlButtons)
 
     # overflow row:
     def overflow_row(self) -> ActionRow:
@@ -566,7 +566,7 @@ class Paginator:
                 custom_id="quit",
             )
             controlButtons.append(quitButton) if len(controlButtons) < 5 else None
-        return None if controlButtons == [] else ActionRow(components=controlButtons)
+        return None if controlButtons == [] else ActionRow(*controlButtons)
 
     # components:
     def components(self) -> list:
