@@ -1,7 +1,7 @@
 from asyncio import get_running_loop, sleep
 from random import randint
 from time import perf_counter
-from typing import List, Optional, Union, Coroutine
+from typing import List, Optional, Union, Coroutine, Type
 
 from interactions import (
     Embed,
@@ -15,7 +15,7 @@ from interactions import (
     ButtonStyle,
 )
 from interactions import Client
-from interactions.context import InteractionContext, Context, ComponentContext
+from interactions.context import CommandContext, Context, ComponentContext
 from interactions.api.error import HTTPException
 from interactions.models.component import (
     ActionRow,
@@ -24,23 +24,25 @@ from interactions.models.component import (
     SelectOption,
 )
 
-from .errors import BadButtons, BadOnly, IncorrectDataType, TooManyButtons, TooManyFiles
+from interactions.ext.wait_for import wait_for_component
+
+from errors import BadButtons, BadOnly, IncorrectDataType, TooManyButtons, TooManyFiles
 
 
 class TimedOut:
     def __init__(
         self,
         ctx: Union[
-            InteractionContext,
+            CommandContext,
             Context,
             Channel,
             User,
             Member,
         ],
-        buttonContext: Union[ComponentContext, type(None)],
+        buttonContext: Union[ComponentContext, Type[None]],
         timeTaken: int,
         lastContent: str,
-        lastEmbed: Union[Embed, type(None)],
+        lastEmbed: Union[Embed, Type[None]],
         successfulUsers: List[User],
         failedUsers: List[User],
     ):
@@ -58,7 +60,7 @@ class Paginator:
         self,
         bot: Client,
         ctx: Union[
-            InteractionContext,
+            CommandContext,
             Context,
             Channel,
             User,
@@ -208,14 +210,14 @@ class Paginator:
     async def run(self) -> TimedOut:
         # sending the message based on context and dm:
         if self.dm:
-            if isinstance(self.ctx, (InteractionContext, Context, ComponentContext)):
+            if isinstance(self.ctx, (CommandContext, Context, ComponentContext)):
                 self.msg = await self.ctx.author.send(
                     content=self.content[0] if self.multiContent else self.content,
                     embeds=self.pages[0],
                     components=self.components(),
                 )
                 await self.ctx.send("Check your DMs!", ephemeral=True) if isinstance(
-                    self.ctx, InteractionContext
+                    self.ctx, CommandContext
                 ) else await self.ctx.send("Check your DMs!")
             elif isinstance(self.ctx, User):
                 self.msg = await self.ctx.send(
@@ -226,7 +228,7 @@ class Paginator:
             else:
                 raise IncorrectDataType(
                     "ctx",
-                    "InteractionContext, Context, ComponentContext, or user for dm=True",
+                    "CommandContext, Context, ComponentContext, or user for dm=True",
                     self.ctx,
                 )
         elif self.editOnMessage:
@@ -244,7 +246,7 @@ class Paginator:
                     components=self.components(),
                     ephemeral=self.hidden,
                 )
-                if isinstance(self.ctx, InteractionContext)
+                if isinstance(self.ctx, CommandContext)
                 else await self.ctx.send(
                     content=self.content[0] if self.multiContent else self.content,
                     embeds=self.pages[0],
@@ -258,22 +260,18 @@ class Paginator:
         timer = self.timeout
         # loop:
         while True:
-            if self.timedOut:
-                timer = 0
-                break
-            if timer <= 0:
+            try:
+                self.buttonContext: ComponentContext = await wait_for_component(
+                    self.bot,
+                    components=[
+                        f"first{self.id}",
+                        f"prev{self.id}",
+                        f"next{self.id}",
+                        f"last{self.id}",
+                    ],
+                )
+            except TimeoutError:
                 self.timedOut = True
-                break
-            if self.stop:  # if self.stop == True
-                # what to do after timeout:
-                try:
-                    if self.deleteAfterTimeout and not self.hidden:
-                        await self.msg.edit(components=None)
-                    elif self.disableAfterTimeout and not self.hidden:
-                        await self.msg.edit(components=self.disabled())
-                except HTTPException:
-                    pass
-                # returns useful data:
                 return TimedOut(
                     self.ctx,
                     self.buttonContext,
@@ -285,19 +283,7 @@ class Paginator:
                     self.successfulUsers,
                     self.failedUsers,
                 )
-            timer -= 1
-            await sleep(1)
-        return TimedOut(
-            self.ctx,
-            self.buttonContext,
-            round(perf_counter() - self.start),
-            self.content
-            if isinstance(self.content, (str, type(None)))
-            else self.content[self.index - 1],
-            self.pages[self.index - 1] if self.embeds else None,
-            self.successfulUsers,
-            self.failedUsers,
-        )
+            self.componentCallback(self.buttonContext)
 
     # component callback:
     async def componentCallback(self, buttonContext: ComponentContext):
