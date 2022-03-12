@@ -1,30 +1,25 @@
-from asyncio import get_running_loop, sleep
+from asyncio import get_running_loop
 from random import randint
 from time import perf_counter
-from typing import List, Optional, Union, Coroutine, Type, Callable
+from typing import Coroutine, List, Optional, Type, Union
+
+from interactions.api.error import HTTPException
+from interactions.context import CommandContext, ComponentContext, Context
+from interactions.ext.wait_for import setup
+from interactions.models.component import ActionRow, Button, SelectMenu, SelectOption
 
 from interactions import (
+    Attachment,
+    ButtonStyle,
+    Channel,
+    Client,
     Embed,
     Emoji,
     Member,
     Message,
     Role,
     User,
-    Attachment,
-    Channel,
-    ButtonStyle,
 )
-from interactions import Client
-from interactions.context import CommandContext, Context, ComponentContext
-from interactions.api.error import HTTPException
-from interactions.models.component import (
-    ActionRow,
-    Button,
-    SelectMenu,
-    SelectOption,
-)
-
-from interactions.ext.wait_for import setup
 
 from .errors import BadButtons, BadOnly, IncorrectDataType, TooManyButtons, TooManyFiles
 
@@ -80,12 +75,8 @@ class Paginator:
             ]
         ] = None,
         dm: Optional[bool] = False,
-        customButton: Optional[
-            List[Union[Union[Button, SelectMenu], Coroutine]]
-        ] = None,
-        customActionRow: Optional[
-            List[Union[Union[Button, SelectMenu], Coroutine]]
-        ] = None,
+        customButton: Optional[List[Union[Union[Button, SelectMenu], Coroutine]]] = None,
+        customActionRow: Optional[List[Union[Union[Button, SelectMenu], Coroutine]]] = None,
         timeout: Optional[int] = None,
         disableAfterTimeout: Optional[bool] = True,
         deleteAfterTimeout: Optional[bool] = False,
@@ -153,9 +144,7 @@ class Paginator:
             quitButtonEmoji if useEmoji else None,
         ]
         self.emojis = (
-            [firstEmoji, prevEmoji, nextEmoji, lastEmoji]
-            if useEmoji
-            else [None, None, None, None]
+            [firstEmoji, prevEmoji, nextEmoji, lastEmoji] if useEmoji else [None, None, None, None]
         )
         self.styles = [firstStyle, prevStyle, indexStyle, nextStyle, lastStyle]
         self.customButton = customButton
@@ -272,15 +261,13 @@ class Paginator:
         print("entering loop")
         while True:
             try:
-                self.buttonContext: ComponentContext = (
-                    await self.bot.wait_for_component(
-                        components=[
-                            f"first{self.id}",
-                            f"prev{self.id}",
-                            f"next{self.id}",
-                            f"last{self.id}",
-                        ],
-                    )
+                self.buttonContext: ComponentContext = await self.bot.wait_for_component(
+                    components=[
+                        f"first{self.id}",
+                        f"prev{self.id}",
+                        f"next{self.id}",
+                        f"last{self.id}",
+                    ],
                 )
             except TimeoutError:
                 self.timedOut = True
@@ -334,9 +321,7 @@ class Paginator:
                         await buttonContext.edit_origin(components=self.disabled())
                 else:
                     if self.deleteAfterTimeout and not self.hidden:
-                        await buttonContext.edit_origin(
-                            components=None, embed=self.timeoutEmbed
-                        )
+                        await buttonContext.edit_origin(components=None, embed=self.timeoutEmbed)
                     elif self.disableAfterTimeout and not self.hidden:
                         await buttonContext.edit_origin(
                             components=self.disabled(), embed=self.timeoutEmbed
@@ -435,19 +420,13 @@ class Paginator:
     # select:
     def select_row(self) -> ActionRow:
         select_options = []
-        for i in (
-            self.pages if self.embeds else self.content
-        ):  # loops through pages (embeds)
-            pageNum = (self.pages if self.embeds else self.content).index(
-                i
-            ) + 1  # page number
+        for i in self.pages if self.embeds else self.content:  # loops through pages (embeds)
+            pageNum = (self.pages if self.embeds else self.content).index(i) + 1  # page number
             try:
                 title = i.title if self.embeds else i  # title of embed
                 if title == Embed.Empty:  # if there is no title:
                     select_options.append(
-                        SelectOption(
-                            label=f"{pageNum}: Title not found", value=f"{pageNum}"
-                        )
+                        SelectOption(label=f"{pageNum}: Title not found", value=f"{pageNum}")
                     )
                 else:  # if there is a title:
                     # makes sure that title is 100 characters or less
@@ -457,9 +436,7 @@ class Paginator:
                     )
             except Exception:  # if it failed for some reason:
                 select_options.append(
-                    SelectOption(
-                        label=f"{pageNum}: Title not found", value=f"{pageNum}"
-                    )
+                    SelectOption(label=f"{pageNum}: Title not found", value=f"{pageNum}")
                 )
         select = SelectMenu(
             options=select_options,

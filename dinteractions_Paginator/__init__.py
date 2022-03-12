@@ -1,2 +1,3 @@
 from ._Paginator import Paginator
-__all__=["Paginator"]
+
+__all__ = ["Paginator"]
