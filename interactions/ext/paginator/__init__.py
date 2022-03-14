@@ -1,3 +1,3 @@
-from .paginator import Paginator, ButtonConfig, ButtonKind, Data
+from .paginator import ButtonKind, Data, Paginator
 
-__all__ = ["Paginator", "ButtonConfig", "ButtonKind", "Data"]
+__all__ = ["Paginator", "ButtonKind", "Data"]

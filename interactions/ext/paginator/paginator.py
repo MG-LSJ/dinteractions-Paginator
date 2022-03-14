@@ -1,15 +1,14 @@
 from asyncio import TimeoutError
 from enum import Enum
-from random import randint
-from typing import Dict, List, Optional, Union, Callable, Coroutine
 from inspect import iscoroutinefunction
+from random import randint
+from typing import Callable, Coroutine, Dict, List, Optional, Union
 
 from interactions.ext.wait_for import setup, wait_for_component
 
 from interactions import (
     ActionRow,
     Button,
-    ButtonStyle,
     Client,
     CommandContext,
     ComponentContext,
@@ -17,9 +16,10 @@ from interactions import (
     Embed,
     Emoji,
     Message,
-    SelectOption,
     SelectMenu,
+    SelectOption,
 )
+
 from .errors import StopPaginator
 
 
@@ -32,23 +32,6 @@ class ButtonKind(str, Enum):
     PREVIOUS = "prev"
     NEXT = "next"
     LAST = "last"
-
-
-class ButtonConfig:
-    def __init__(
-        self,
-        style: ButtonStyle,
-        label: str,
-        emoji: Optional[Emoji] = None,
-        disabled: Optional[bool] = False,
-    ):
-        self.kind = None
-        self.kwargs = {
-            "style": style,
-            "label": label,
-            "emoji": emoji,
-            "disabled": disabled,
-        }
 
 
 class Data(DictSerializerMixin):
@@ -70,6 +53,8 @@ class Paginator(DictSerializerMixin):
         "pages",
         "timeout",
         "author_only",
+        "use_buttons",
+        "use_select",
         "buttons",
         "select_placeholder",
         "func_before_edit",
@@ -86,7 +71,9 @@ class Paginator(DictSerializerMixin):
     pages: Union[List[str], Dict[str, Embed]]
     timeout: Optional[Union[int, float]]
     author_only: Optional[bool]
-    buttons: Optional[List[ButtonConfig]]
+    use_buttons: Optional[bool]
+    use_select: Optional[bool]
+    buttons: Optional[Dict[str, Button]]
     select_placeholder: Optional[str]
     func_before_edit: Optional[Union[Callable, Coroutine]]
     func_after_edit: Optional[Union[Callable, Coroutine]]
@@ -104,7 +91,9 @@ class Paginator(DictSerializerMixin):
         pages: Union[List[Embed], List[str], Dict[str, Embed]],
         timeout: Optional[Union[int, float]] = None,
         author_only: Optional[bool] = False,
-        buttons: Optional[List[ButtonConfig]] = None,
+        use_buttons: Optional[bool] = True,
+        use_select: Optional[bool] = True,
+        buttons: Optional[Dict[str, Button]] = None,
         select_placeholder: Optional[str] = "Page",
         func_before_edit: Optional[Union[Callable, Coroutine]] = None,
         func_after_edit: Optional[Union[Callable, Coroutine]] = None,
@@ -119,6 +108,8 @@ class Paginator(DictSerializerMixin):
             pages=pages,
             timeout=timeout,
             author_only=author_only,
+            use_buttons=use_buttons,
+            use_select=use_select,
             buttons={} if buttons is None else buttons,
             select_placeholder=select_placeholder,
             func_before_edit=func_before_edit,
@@ -187,10 +178,7 @@ class Paginator(DictSerializerMixin):
 
     async def component_logic(self):
         custom_id: str = self.component_ctx.data.custom_id
-        print("custom_id", custom_id)
         if custom_id == f"select{self.id}":
-            print("test")
-            print(self.component_ctx.data.values)
             self.index = int(self.component_ctx.data.values[0]) - 1
         elif custom_id == f"first{self.id}":
             self.index = 0
@@ -206,7 +194,9 @@ class Paginator(DictSerializerMixin):
     async def check(self, ctx: ComponentContext) -> bool:
         return ctx.user.id == self.ctx.user.id if self.author_only else True
 
-    def select_row(self) -> ActionRow:
+    def select_row(self) -> Optional[ActionRow]:
+        if not self.use_select:
+            return
         select_options = []
         if self.is_dict:
             for content, embed in self.pages.items():
@@ -236,50 +226,25 @@ class Paginator(DictSerializerMixin):
         )
         return ActionRow(components=[select])
 
-    def buttons_row(self) -> ActionRow:
+    def buttons_row(self) -> Optional[ActionRow]:
+        if not self.use_buttons:
+            return
         disabled_left = self.index == 0
         disabled_right = self.index == self.top
-        kwargs = {key: value.kwargs for key, value in self.buttons.items()}
-        return ActionRow(
-            components=[
-                kwargs.get(
-                    "first",
-                    Button(
-                        style=1,
-                        emoji=Emoji(name="⏪"),
-                        custom_id=f"first{self.id}",
-                        disabled=disabled_left,
-                    ),
-                ),
-                kwargs.get(
-                    "prev",
-                    Button(
-                        style=1,
-                        emoji=Emoji(name="◀"),
-                        custom_id=f"prev{self.id}",
-                        disabled=disabled_left,
-                    ),
-                ),
-                kwargs.get(
-                    "next",
-                    Button(
-                        style=1,
-                        emoji=Emoji(name="▶"),
-                        custom_id=f"next{self.id}",
-                        disabled=disabled_right,
-                    ),
-                ),
-                kwargs.get(
-                    "last",
-                    Button(
-                        style=1,
-                        emoji=Emoji(name="⏩"),
-                        custom_id=f"last{self.id}",
-                        disabled=disabled_right,
-                    ),
-                ),
-            ]
-        )
+        buttons = [
+            self.buttons.get("first", Button(style=1, emoji=Emoji(name="⏮️"))),
+            self.buttons.get("prev", Button(style=1, emoji=Emoji(name="◀️"))),
+            self.buttons.get("next", Button(style=1, emoji=Emoji(name="▶️"))),
+            self.buttons.get("last", Button(style=1, emoji=Emoji(name="⏭️"))),
+        ]
+        for i, button in enumerate(buttons):
+            button.custom_id = self.custom_ids[i + 1]
+            button._json.update({"custom_id": self.custom_ids[i + 1]})
+            button.disabled = disabled_left if i < 2 else disabled_right
+            button._json.update(
+                {"disabled": disabled_left if i < 2 else disabled_right}
+            )
+        return ActionRow(components=buttons)
 
     def components(self) -> List[ActionRow]:
         return list(filter(None, [self.select_row(), self.buttons_row()]))
@@ -315,9 +280,7 @@ class Paginator(DictSerializerMixin):
         for action_row in components:
             for component in action_row.components:
                 component.disabled = True
-        # if not hasattr(self.message, "_client") or not self.message._client:
-        #     self.message = Message(**self.message._json, _client=self.client._http)
-        # await self.message.edit(components=components)
+        ...  # TODO: implement message editing
 
     async def run_function(self, func) -> bool:
         if func is not None:
