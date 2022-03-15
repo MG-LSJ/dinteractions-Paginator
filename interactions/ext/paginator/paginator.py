@@ -20,13 +20,11 @@ from interactions import (
     SelectOption,
 )
 
-from .errors import StopPaginator
+from .errors import PaginatorWontWork, StopPaginator
 
 
 class ButtonKind(str, Enum):
-    """
-    Enum for button types.
-    """
+    """Enum for button types."""
 
     FIRST = "first"
     PREVIOUS = "prev"
@@ -55,6 +53,7 @@ class Paginator(DictSerializerMixin):
         "author_only",
         "use_buttons",
         "use_select",
+        "extended_buttons",
         "buttons",
         "select_placeholder",
         "func_before_edit",
@@ -73,6 +72,7 @@ class Paginator(DictSerializerMixin):
     author_only: Optional[bool]
     use_buttons: Optional[bool]
     use_select: Optional[bool]
+    extended_buttons: Optional[bool]
     buttons: Optional[Dict[str, Button]]
     select_placeholder: Optional[str]
     func_before_edit: Optional[Union[Callable, Coroutine]]
@@ -93,6 +93,7 @@ class Paginator(DictSerializerMixin):
         author_only: Optional[bool] = False,
         use_buttons: Optional[bool] = True,
         use_select: Optional[bool] = True,
+        extended_buttons: Optional[bool] = True,
         buttons: Optional[Dict[str, Button]] = None,
         select_placeholder: Optional[str] = "Page",
         func_before_edit: Optional[Union[Callable, Coroutine]] = None,
@@ -101,6 +102,10 @@ class Paginator(DictSerializerMixin):
     ) -> None:
         if not hasattr(client, "wait_for_component"):
             setup(client)
+        if not use_buttons or use_select:
+            raise PaginatorWontWork(
+                "You need either buttons, select, or both, or else the paginator wont work!"
+            )
 
         super().__init__(
             client=client,
@@ -110,6 +115,7 @@ class Paginator(DictSerializerMixin):
             author_only=author_only,
             use_buttons=use_buttons,
             use_select=use_select,
+            extended_buttons=extended_buttons,
             buttons={} if buttons is None else buttons,
             select_placeholder=select_placeholder,
             func_before_edit=func_before_edit,
@@ -117,9 +123,7 @@ class Paginator(DictSerializerMixin):
             **kwargs,
         )
         self.id: int = kwargs.get("id", randint(0, 999_999_999))
-        self.component_ctx: Optional[ComponentContext] = kwargs.get(
-            "component_ctx", None
-        )
+        self.component_ctx: Optional[ComponentContext] = kwargs.get("component_ctx", None)
         self.index: int = kwargs.get("index", 0)
         self.top: int = kwargs.get("top", len(pages) - 1)
         self.message: Message = kwargs.get("message", None)
@@ -206,22 +210,20 @@ class Paginator(DictSerializerMixin):
         select_options = []
         if self.is_dict:
             for content, embed in self.pages.items():
-                content: str
-                embed: Embed
-                page_num: int = list(self.pages).index(content) + 1
+                page_num: str = str(list(self.pages).index(content) + 1)
                 title: Optional[str] = embed.title
-                label: str = ""
                 if not title:
-                    label = f'{page_num}: {f"{content[:93]}..." if len(content) > 96 else content}'
+                    label: str = (
+                        f'{page_num}: {f"{content[:93]}..." if len(content) > 96 else content}'
+                    )
                 else:
-                    label = f'{page_num}: {f"{title[:93]}..." if len(title) > 96 else title}'
-                select_options.append(SelectOption(label=label, value=str(page_num)))
+                    label: str = f'{page_num}: {f"{title[:93]}..." if len(title) > 96 else title}'
+                select_options.append(SelectOption(label=label, value=page_num))
         else:
             for content in self.pages:
-                content: str
-                page_num: int = self.pages.index(content) + 1
-                label = f'{page_num}: {f"{content[:93]}..." if len(content) > 96 else content}'
-                select_options.append(SelectOption(label=label, value=str(page_num)))
+                page_num: str = str(self.pages.index(content) + 1)
+                label: str = f'{page_num}: {f"{content[:93]}..." if len(content) > 96 else content}'
+                select_options.append(SelectOption(label=label, value=page_num))
 
         select = SelectMenu(
             options=select_options,
@@ -247,9 +249,7 @@ class Paginator(DictSerializerMixin):
             button.custom_id = self.custom_ids[i + 1]
             button._json.update({"custom_id": self.custom_ids[i + 1]})
             button.disabled = disabled_left if i < 2 else disabled_right
-            button._json.update(
-                {"disabled": disabled_left if i < 2 else disabled_right}
-            )
+            button._json.update({"disabled": disabled_left if i < 2 else disabled_right})
         return ActionRow(components=buttons)
 
     def components(self) -> List[ActionRow]:

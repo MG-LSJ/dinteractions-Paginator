@@ -4,3 +4,7 @@ class PaginatorError(Exception):
 
 class StopPaginator(PaginatorError):
     """Exception raised to stop paginator"""
+
+
+class PaginatorWontWork(PaginatorError):
+    """Exception raised when paginator won't work"""
