@@ -102,7 +102,7 @@ class Paginator(DictSerializerMixin):
     ) -> None:
         if not hasattr(client, "wait_for_component"):
             setup(client)
-        if not use_buttons or use_select:
+        if not (use_buttons or use_select):
             raise PaginatorWontWork(
                 "You need either buttons, select, or both, or else the paginator wont work!"
             )
@@ -123,7 +123,9 @@ class Paginator(DictSerializerMixin):
             **kwargs,
         )
         self.id: int = kwargs.get("id", randint(0, 999_999_999))
-        self.component_ctx: Optional[ComponentContext] = kwargs.get("component_ctx", None)
+        self.component_ctx: Optional[ComponentContext] = kwargs.get(
+            "component_ctx", None
+        )
         self.index: int = kwargs.get("index", 0)
         self.top: int = kwargs.get("top", len(pages) - 1)
         self.message: Message = kwargs.get("message", None)
@@ -213,9 +215,7 @@ class Paginator(DictSerializerMixin):
                 page_num: str = str(list(self.pages).index(content) + 1)
                 title: Optional[str] = embed.title
                 if not title:
-                    label: str = (
-                        f'{page_num}: {f"{content[:93]}..." if len(content) > 96 else content}'
-                    )
+                    label: str = f'{page_num}: {f"{content[:93]}..." if len(content) > 96 else content}'
                 else:
                     label: str = f'{page_num}: {f"{title[:93]}..." if len(title) > 96 else title}'
                 select_options.append(SelectOption(label=label, value=page_num))
@@ -240,17 +240,33 @@ class Paginator(DictSerializerMixin):
         disabled_left = self.index == 0
         disabled_right = self.index == self.top
         buttons = [
-            self.buttons.get("first", Button(style=1, emoji=Emoji(name="⏮️"))),
+            self.buttons.get("first", Button(style=1, emoji=Emoji(name="⏮️")))
+            if self.extended_buttons
+            else None,
             self.buttons.get("prev", Button(style=1, emoji=Emoji(name="◀️"))),
             self.buttons.get("next", Button(style=1, emoji=Emoji(name="▶️"))),
-            self.buttons.get("last", Button(style=1, emoji=Emoji(name="⏭️"))),
+            self.buttons.get("last", Button(style=1, emoji=Emoji(name="⏭️")))
+            if self.extended_buttons
+            else None,
         ]
         for i, button in enumerate(buttons):
+            if button is None:
+                continue
             button.custom_id = self.custom_ids[i + 1]
-            button._json.update({"custom_id": self.custom_ids[i + 1]})
-            button.disabled = disabled_left if i < 2 else disabled_right
-            button._json.update({"disabled": disabled_left if i < 2 else disabled_right})
-        return ActionRow(components=buttons)
+            button._json.update({"custom_id": button.custom_id})
+            button.disabled = (
+                disabled_left
+                if button.custom_id in self.custom_ids[1:3]
+                else disabled_right
+            )
+            button._json.update(
+                {
+                    "disabled": disabled_left
+                    if button.custom_id in self.custom_ids[1:3]
+                    else disabled_right
+                }
+            )
+        return ActionRow(components=list(filter(None, buttons)))
 
     def components(self) -> List[ActionRow]:
         return list(filter(None, [self.select_row(), self.buttons_row()]))
