@@ -40,7 +40,7 @@ class Data(DictSerializerMixin):
     component_ctx: ComponentContext
     message: Message
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
 
@@ -125,10 +125,10 @@ class Paginator(DictSerializerMixin):
             **kwargs,
         )
         self.id: int = kwargs.get("id", randint(0, 999_999_999))
-        self.component_ctx: Optional[ComponentContext] = kwargs.get("component_ctx", None)
+        self.component_ctx: Optional[ComponentContext] = kwargs.get("component_ctx")
         self.index: int = kwargs.get("index", 0)
         self.top: int = kwargs.get("top", len(pages) - 1)
-        self.message: Message = kwargs.get("message", None)
+        self.message: Message = kwargs.get("message")
         self.is_dict: bool = isinstance(pages, dict)
 
         self._json.update(
@@ -174,7 +174,7 @@ class Paginator(DictSerializerMixin):
                     continue
 
     @property
-    def custom_ids(self):
+    def custom_ids(self) -> List[str]:
         return [
             f"select{self.id}",
             f"first{self.id}",
@@ -183,7 +183,7 @@ class Paginator(DictSerializerMixin):
             f"last{self.id}",
         ]
 
-    async def component_logic(self):
+    async def component_logic(self) -> None:
         custom_id: str = self.component_ctx.data.custom_id
         if custom_id == f"select{self.id}":
             self.index = int(self.component_ctx.data.values[0]) - 1
@@ -284,7 +284,7 @@ class Paginator(DictSerializerMixin):
                 components=self.components(),
             )
 
-    async def edit(self, components=None) -> Message:
+    async def edit(self, components: Optional[List[ActionRow]] = None) -> Message:
         if self.is_dict:
             return await self.component_ctx.edit(
                 list(self.pages.keys())[self.index],
@@ -297,7 +297,7 @@ class Paginator(DictSerializerMixin):
                 components=components if components is not None else self.components(),
             )
 
-    async def end_paginator(self):
+    async def end_paginator(self) -> None:
         components = self.components()
         for action_row in components:
             for component in action_row.components:
@@ -311,7 +311,7 @@ class Paginator(DictSerializerMixin):
             else:
                 return func(self, self.component_ctx)
 
-    def data(self):
+    def data(self) -> Data:
         return Data(
             paginator=self,
             original_ctx=self.ctx,
