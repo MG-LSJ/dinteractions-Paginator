@@ -35,6 +35,13 @@ repos:
         name: isort Formatting
         language: python
         types: [file, python]
+  - repo: https://github.com/pycqa/isort
+    rev: 5.10.1
+    hooks:
+      - id: isort
+        name: isort Formatting
+        language: python
+        types: [file, python]
   - repo: https://github.com/psf/black
     rev: 22.1.0
     hooks:

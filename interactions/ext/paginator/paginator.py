@@ -2,7 +2,7 @@ from asyncio import TimeoutError
 from enum import Enum
 from inspect import iscoroutinefunction
 from random import randint
-from typing import Callable, Coroutine, Dict, List, Optional, Union
+from typing import Any, Callable, Coroutine, Dict, List, Optional, Union
 
 from interactions.ext.wait_for import setup, wait_for_component
 
@@ -33,7 +33,8 @@ class ButtonKind(str, Enum):
 
 
 class Data(DictSerializerMixin):
-    __slots__ = ("paginator", "original_ctx", "component_ctx", "message")
+    __slots__ = ("_json", "paginator", "original_ctx", "component_ctx", "message")
+    _json: Dict[str, Any]
     paginator: "Paginator"
     original_ctx: Union[CommandContext, ComponentContext]
     component_ctx: ComponentContext
@@ -65,6 +66,7 @@ class Paginator(DictSerializerMixin):
         "is_dict",
         "message",
     )
+    _json: Dict[str, Any]
     client: Client
     ctx: Union[CommandContext, ComponentContext]
     pages: Union[List[str], Dict[str, Embed]]
@@ -123,9 +125,7 @@ class Paginator(DictSerializerMixin):
             **kwargs,
         )
         self.id: int = kwargs.get("id", randint(0, 999_999_999))
-        self.component_ctx: Optional[ComponentContext] = kwargs.get(
-            "component_ctx", None
-        )
+        self.component_ctx: Optional[ComponentContext] = kwargs.get("component_ctx", None)
         self.index: int = kwargs.get("index", 0)
         self.top: int = kwargs.get("top", len(pages) - 1)
         self.message: Message = kwargs.get("message", None)
@@ -215,7 +215,9 @@ class Paginator(DictSerializerMixin):
                 page_num: str = str(list(self.pages).index(content) + 1)
                 title: Optional[str] = embed.title
                 if not title:
-                    label: str = f'{page_num}: {f"{content[:93]}..." if len(content) > 96 else content}'
+                    label: str = (
+                        f'{page_num}: {f"{content[:93]}..." if len(content) > 96 else content}'
+                    )
                 else:
                     label: str = f'{page_num}: {f"{title[:93]}..." if len(title) > 96 else title}'
                 select_options.append(SelectOption(label=label, value=page_num))
@@ -255,9 +257,7 @@ class Paginator(DictSerializerMixin):
             button.custom_id = self.custom_ids[i + 1]
             button._json.update({"custom_id": button.custom_id})
             button.disabled = (
-                disabled_left
-                if button.custom_id in self.custom_ids[1:3]
-                else disabled_right
+                disabled_left if button.custom_id in self.custom_ids[1:3] else disabled_right
             )
             button._json.update(
                 {
