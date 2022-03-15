@@ -142,8 +142,9 @@ class Paginator(DictSerializerMixin):
                 self.component_ctx: ComponentContext = await wait_for_component(
                     self.client,
                     self.custom_ids,
-                    check=self.check,
-                    timeout=self.timeout,
+                    self.message.id,
+                    self.check,
+                    self.timeout,
                 )
             except TimeoutError:
                 await self.end_paginator()
@@ -192,7 +193,12 @@ class Paginator(DictSerializerMixin):
             self.index = self.top
 
     async def check(self, ctx: ComponentContext) -> bool:
-        return ctx.user.id == self.ctx.user.id if self.author_only else True
+        boolean: bool = True
+        if self.author_only:
+            boolean = ctx.user.id == self.ctx.user.id
+        if not boolean:
+            await ctx.send("This paginator is not for you!", ephemeral=True)
+        return boolean
 
     def select_row(self) -> Optional[ActionRow]:
         if not self.use_select:
