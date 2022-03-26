@@ -293,9 +293,16 @@ class Paginator(DictSerializerMixin):
                 components=self.components(),
             )
         else:
-            return await self.ctx.send(
-                self.pages[self.index],
-                components=self.components(),
+            return (
+                await self.ctx.send(
+                    embeds=self.pages[self.index],
+                    components=self.components(),
+                )
+                if self.is_embeds
+                else await self.ctx.send(
+                    self.pages[self.index],
+                    components=self.components(),
+                )
             )
 
     async def edit(self, components: Optional[List[ActionRow]] = None) -> Message:
@@ -306,9 +313,20 @@ class Paginator(DictSerializerMixin):
                 components=components if components is not None else self.components(),
             )
         else:
-            return await self.component_ctx.edit(
-                self.pages[self.index],
-                components=components if components is not None else self.components(),
+            return (
+                await self.component_ctx.edit(
+                    embeds=self.pages[self.index],
+                    components=components
+                    if components is not None
+                    else self.components(),
+                )
+                if self.is_embeds
+                else await self.component_ctx.edit(
+                    self.pages[self.index],
+                    components=components
+                    if components is not None
+                    else self.components(),
+                )
             )
 
     async def end_paginator(self) -> None:
