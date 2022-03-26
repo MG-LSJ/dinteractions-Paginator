@@ -64,6 +64,7 @@ class Paginator(DictSerializerMixin):
         "index",
         "top",
         "is_dict",
+        "is_embeds",
         "message",
     )
     _json: Dict[str, Any]
@@ -84,6 +85,7 @@ class Paginator(DictSerializerMixin):
     index: int
     top: int
     is_dict: bool
+    is_embeds: bool
     message: Message
 
     def __init__(
