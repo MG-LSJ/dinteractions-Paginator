@@ -292,8 +292,6 @@ class Paginator(DictSerializerMixin):
                 embeds=list(self.pages.values())[self.index],
                 components=self.components(),
             )
-        print("embeds =", self.pages[self.index])
-        print("components =", self.components())
         return (
             await self.ctx.send(
                 embeds=self.pages[self.index],
