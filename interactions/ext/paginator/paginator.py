@@ -292,18 +292,19 @@ class Paginator(DictSerializerMixin):
                 embeds=list(self.pages.values())[self.index],
                 components=self.components(),
             )
-        else:
-            return (
-                await self.ctx.send(
-                    embeds=self.pages[self.index],
-                    components=self.components(),
-                )
-                if self.is_embeds
-                else await self.ctx.send(
-                    self.pages[self.index],
-                    components=self.components(),
-                )
+        print("embeds =", self.pages[self.index])
+        print("components =", self.components())
+        return (
+            await self.ctx.send(
+                embeds=self.pages[self.index],
+                components=self.components(),
             )
+            if self.is_embeds
+            else await self.ctx.send(
+                self.pages[self.index],
+                components=self.components(),
+            )
+        )
 
     async def edit(self, components: Optional[List[ActionRow]] = None) -> Message:
         if self.is_dict:
