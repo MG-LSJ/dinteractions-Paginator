@@ -69,7 +69,7 @@ class Paginator(DictSerializerMixin):
     _json: Dict[str, Any]
     client: Client
     ctx: Union[CommandContext, ComponentContext]
-    pages: Union[List[str], Dict[str, Embed]]
+    pages: Union[List[str], List[Embed], Dict[str, Embed]]
     timeout: Optional[Union[int, float]]
     author_only: Optional[bool]
     use_buttons: Optional[bool]
@@ -130,6 +130,9 @@ class Paginator(DictSerializerMixin):
         self.top: int = kwargs.get("top", len(pages) - 1)
         self.message: Message = kwargs.get("message")
         self.is_dict: bool = isinstance(pages, dict)
+        self.is_embeds: bool = isinstance(pages, list) and all(
+            isinstance(page, Embed) for page in pages
+        )
 
         self._json.update(
             {
@@ -214,17 +217,24 @@ class Paginator(DictSerializerMixin):
             for content, embed in self.pages.items():
                 page_num: str = str(list(self.pages).index(content) + 1)
                 title: Optional[str] = embed.title
-                if not title:
-                    label: str = (
-                        f'{page_num}: {f"{content[:93]}..." if len(content) > 96 else content}'
-                    )
-                else:
-                    label: str = f'{page_num}: {f"{title[:93]}..." if len(title) > 96 else title}'
+                label: str = (
+                    f'{page_num}: {f"{title[:93]}..." if len(title) > 96 else title}'
+                    if title
+                    else f'{page_num}: {f"{content[:93]}..." if len(content) > 96 else content}'
+                )
+
                 select_options.append(SelectOption(label=label, value=page_num))
         else:
             for content in self.pages:
                 page_num: str = str(self.pages.index(content) + 1)
-                label: str = f'{page_num}: {f"{content[:93]}..." if len(content) > 96 else content}'
+                if not self.is_embeds:
+                    label: str = f'{page_num}: {f"{content[:93]}..." if len(content) > 96 else content}'
+                else:
+                    embed: Embed = content
+                    if embed.title is not None:
+                        label: str = f'{page_num}: {f"{embed.title[:93]}..." if len(embed.title) > 96 else embed.title}'
+                    else:
+                        label: str = f"{page_num}: No title"
                 select_options.append(SelectOption(label=label, value=page_num))
 
         select = SelectMenu(
@@ -257,7 +267,9 @@ class Paginator(DictSerializerMixin):
             button.custom_id = self.custom_ids[i + 1]
             button._json.update({"custom_id": button.custom_id})
             button.disabled = (
-                disabled_left if button.custom_id in self.custom_ids[1:3] else disabled_right
+                disabled_left
+                if button.custom_id in self.custom_ids[1:3]
+                else disabled_right
             )
             button._json.update(
                 {
