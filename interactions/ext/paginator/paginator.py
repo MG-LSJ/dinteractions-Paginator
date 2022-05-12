@@ -18,6 +18,7 @@ from interactions import (
     Message,
     SelectMenu,
     SelectOption,
+    Snowflake,
 )
 
 from .errors import PaginatorWontWork, StopPaginator
@@ -57,6 +58,8 @@ class Paginator(DictSerializerMixin):
         "extended_buttons",
         "buttons",
         "select_placeholder",
+        "disable_after_timeout",
+        "delete_after_timeout",
         "func_before_edit",
         "func_after_edit",
         "id",
@@ -66,6 +69,7 @@ class Paginator(DictSerializerMixin):
         "is_dict",
         "is_embeds",
         "message",
+        "_msg",
     )
     _json: Dict[str, Any]
     client: Client
@@ -78,6 +82,8 @@ class Paginator(DictSerializerMixin):
     extended_buttons: Optional[bool]
     buttons: Optional[Dict[str, Button]]
     select_placeholder: Optional[str]
+    disable_after_timeout: bool
+    delete_after_timeout: bool
     func_before_edit: Optional[Union[Callable, Coroutine]]
     func_after_edit: Optional[Union[Callable, Coroutine]]
     id: int
@@ -87,6 +93,7 @@ class Paginator(DictSerializerMixin):
     is_dict: bool
     is_embeds: bool
     message: Message
+    _msg: Dict[str, Optional[Snowflake]]
 
     def __init__(
         self,
@@ -100,6 +107,8 @@ class Paginator(DictSerializerMixin):
         extended_buttons: Optional[bool] = True,
         buttons: Optional[Dict[str, Button]] = None,
         select_placeholder: Optional[str] = "Page",
+        disable_after_timeout: bool = True,
+        delete_after_timeout: bool = False,
         func_before_edit: Optional[Union[Callable, Coroutine]] = None,
         func_after_edit: Optional[Union[Callable, Coroutine]] = None,
         **kwargs,
@@ -122,6 +131,8 @@ class Paginator(DictSerializerMixin):
             extended_buttons=extended_buttons,
             buttons={} if buttons is None else buttons,
             select_placeholder=select_placeholder,
+            disable_after_timeout=disable_after_timeout,
+            delete_after_timeout=delete_after_timeout,
             func_before_edit=func_before_edit,
             func_after_edit=func_after_edit,
             **kwargs,
@@ -135,6 +146,7 @@ class Paginator(DictSerializerMixin):
         self.is_embeds: bool = isinstance(pages, list) and all(
             isinstance(page, Embed) for page in pages
         )
+        self._msg = {"message_id": None, "channel_id": self.ctx.channel_id}
 
         self._json.update(
             {
@@ -148,6 +160,10 @@ class Paginator(DictSerializerMixin):
 
     async def run(self) -> Data:
         self.message = await self.send()
+        self._msg["message_id"] = self.message.id
+        if not self.message._client:
+            self.message._client = self.client._http
+            self.message.channel_id = self.ctx.channel_id
         while True:
             try:
                 self.component_ctx: ComponentContext = await wait_for_component(
@@ -170,6 +186,10 @@ class Paginator(DictSerializerMixin):
                     continue
             await self.component_logic()
             self.message = await self.edit()
+            if not self.message._client:
+                self.message._client = self.client._http
+                self.message.channel_id = self.ctx.channel_id
+                self.message.id = self._msg["message_id"]
             if self.func_after_edit is not None:
                 try:
                     result: Optional[bool] = await self.run_function()
@@ -230,7 +250,9 @@ class Paginator(DictSerializerMixin):
             for content in self.pages:
                 page_num: str = str(self.pages.index(content) + 1)
                 if not self.is_embeds:
-                    label: str = f'{page_num}: {f"{content[:93]}..." if len(content) > 96 else content}'
+                    label: str = (
+                        f'{page_num}: {f"{content[:93]}..." if len(content) > 96 else content}'
+                    )
                 else:
                     embed: Embed = content
                     if embed.title is not None:
@@ -269,9 +291,7 @@ class Paginator(DictSerializerMixin):
             button.custom_id = self.custom_ids[i + 1]
             button._json.update({"custom_id": button.custom_id})
             button.disabled = (
-                disabled_left
-                if button.custom_id in self.custom_ids[1:3]
-                else disabled_right
+                disabled_left if button.custom_id in self.custom_ids[1:3] else disabled_right
             )
             button._json.update(
                 {
@@ -304,35 +324,42 @@ class Paginator(DictSerializerMixin):
             )
         )
 
-    async def edit(self, components: Optional[List[ActionRow]] = None) -> Message:
+    async def edit(self) -> Message:
         if self.is_dict:
             return await self.component_ctx.edit(
                 list(self.pages.keys())[self.index],
                 embeds=list(self.pages.values())[self.index],
-                components=components if components is not None else self.components(),
+                components=self.components(),
             )
         else:
             return (
                 await self.component_ctx.edit(
                     embeds=self.pages[self.index],
-                    components=components
-                    if components is not None
-                    else self.components(),
+                    components=self.components(),
                 )
                 if self.is_embeds
                 else await self.component_ctx.edit(
                     self.pages[self.index],
-                    components=components
-                    if components is not None
-                    else self.components(),
+                    components=self.components(),
                 )
             )
 
-    async def end_paginator(self) -> None:
+    def disabled_components(self) -> List[ActionRow]:
         components = self.components()
         for action_row in components:
             for component in action_row.components:
                 component.disabled = True
+        return components
+
+    def deleted_components(self) -> None:
+        return None
+
+    async def end_paginator(self) -> None:
+        await self.message.edit(
+            components=self.deleted_components()
+            if self.delete_after_timeout
+            else self.disabled_components()
+        )
         ...  # TODO: implement message editing
 
     async def run_function(self, func) -> bool:

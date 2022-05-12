@@ -4,9 +4,9 @@ from time import perf_counter
 from typing import Coroutine, List, Optional, Type, Union
 
 from interactions.api.error import HTTPException
-from interactions.context import CommandContext, ComponentContext, Context
+from interactions.client.context import CommandContext, ComponentContext, _Context
+from interactions.client.models.component import ActionRow, Button, SelectMenu, SelectOption
 from interactions.ext.wait_for import setup
-from interactions.models.component import ActionRow, Button, SelectMenu, SelectOption
 
 from interactions import (
     Attachment,
@@ -29,7 +29,7 @@ class TimedOut:
         self,
         ctx: Union[
             CommandContext,
-            Context,
+            _Context,
             Channel,
             User,
             Member,
@@ -56,7 +56,7 @@ class Paginator:
         bot: Client,
         ctx: Union[
             CommandContext,
-            Context,
+            _Context,
             Channel,
             User,
             Member,
@@ -207,7 +207,7 @@ class Paginator:
         print("start")
         if self.dm:
             print("dm")
-            if isinstance(self.ctx, (CommandContext, Context, ComponentContext)):
+            if isinstance(self.ctx, (CommandContext, _Context, ComponentContext)):
                 self.msg = await self.ctx.author.send(
                     content=self.content[0] if self.multiContent else self.content,
                     embeds=self.pages[0],
@@ -225,7 +225,7 @@ class Paginator:
             else:
                 raise IncorrectDataType(
                     "ctx",
-                    "CommandContext, Context, ComponentContext, or user for dm=True",
+                    "CommandContext, _Context, ComponentContext, or user for dm=True",
                     self.ctx,
                 )
         elif self.editOnMessage:
