@@ -19,6 +19,7 @@ from interactions import (
     SelectMenu,
     SelectOption,
     Snowflake,
+    MISSING,
 )
 
 from .errors import PaginatorWontWork, StopPaginator
@@ -45,6 +46,18 @@ class Data(DictSerializerMixin):
         super().__init__(**kwargs)
 
 
+class Page:
+    __slots__ = ("content", "embeds")
+
+    def __init__(self, content: Optional[str] = None, embeds: Optional[Embed] = None) -> None:
+        self.content = content
+        self.embeds = embeds
+
+    @property
+    def json(self) -> Dict[str, Union[str, Embed]]:
+        return {"content": self.content, "embeds": self.embeds}
+
+
 class Paginator(DictSerializerMixin):
     __slots__ = (
         "_json",
@@ -59,7 +72,7 @@ class Paginator(DictSerializerMixin):
         "buttons",
         "select_placeholder",
         "disable_after_timeout",
-        "delete_after_timeout",
+        "remove_after_timeout",
         "func_before_edit",
         "func_after_edit",
         "id",
@@ -74,16 +87,16 @@ class Paginator(DictSerializerMixin):
     _json: Dict[str, Any]
     client: Client
     ctx: Union[CommandContext, ComponentContext]
-    pages: Union[List[str], List[Embed], Dict[str, Embed]]
+    pages: List[Page]
     timeout: Optional[Union[int, float]]
-    author_only: Optional[bool]
-    use_buttons: Optional[bool]
-    use_select: Optional[bool]
-    extended_buttons: Optional[bool]
+    author_only: bool
+    use_buttons: bool
+    use_select: bool
+    extended_buttons: bool
     buttons: Optional[Dict[str, Button]]
-    select_placeholder: Optional[str]
+    select_placeholder: str
     disable_after_timeout: bool
-    delete_after_timeout: bool
+    remove_after_timeout: bool
     func_before_edit: Optional[Union[Callable, Coroutine]]
     func_after_edit: Optional[Union[Callable, Coroutine]]
     id: int
@@ -99,16 +112,16 @@ class Paginator(DictSerializerMixin):
         self,
         client: Client,
         ctx: Union[CommandContext, ComponentContext],
-        pages: Union[List[Embed], List[str], Dict[str, Embed]],
-        timeout: Optional[Union[int, float]] = None,
-        author_only: Optional[bool] = False,
-        use_buttons: Optional[bool] = True,
-        use_select: Optional[bool] = True,
-        extended_buttons: Optional[bool] = True,
+        pages: List[Page],
+        timeout: Optional[Union[int, float]] = 60,
+        author_only: bool = False,
+        use_buttons: bool = True,
+        use_select: bool = True,
+        extended_buttons: bool = True,
         buttons: Optional[Dict[str, Button]] = None,
-        select_placeholder: Optional[str] = "Page",
+        select_placeholder: str = "Page",
         disable_after_timeout: bool = True,
-        delete_after_timeout: bool = False,
+        remove_after_timeout: bool = False,
         func_before_edit: Optional[Union[Callable, Coroutine]] = None,
         func_after_edit: Optional[Union[Callable, Coroutine]] = None,
         **kwargs,
@@ -132,7 +145,7 @@ class Paginator(DictSerializerMixin):
             buttons={} if buttons is None else buttons,
             select_placeholder=select_placeholder,
             disable_after_timeout=disable_after_timeout,
-            delete_after_timeout=delete_after_timeout,
+            remove_after_timeout=remove_after_timeout,
             func_before_edit=func_before_edit,
             func_after_edit=func_after_edit,
             **kwargs,
@@ -234,32 +247,21 @@ class Paginator(DictSerializerMixin):
     def select_row(self) -> Optional[ActionRow]:
         if not self.use_select:
             return
-        select_options = []
-        if self.is_dict:
-            for content, embed in self.pages.items():
-                page_num: str = str(list(self.pages).index(content) + 1)
-                title: Optional[str] = embed.title
-                label: str = (
-                    f'{page_num}: {f"{title[:93]}..." if len(title) > 96 else title}'
-                    if title
-                    else f'{page_num}: {f"{content[:93]}..." if len(content) > 96 else content}'
-                )
 
-                select_options.append(SelectOption(label=label, value=page_num))
-        else:
-            for content in self.pages:
-                page_num: str = str(self.pages.index(content) + 1)
-                if not self.is_embeds:
-                    label: str = (
-                        f'{page_num}: {f"{content[:93]}..." if len(content) > 96 else content}'
-                    )
+        select_options = []
+        for page_num, page in enumerate(self.pages):
+            page_num += 1
+            if page.content:
+                label: str = f'{page_num}: {f"{page.content[:93]}..." if len(page.content) > 96 else page.content}'
+            elif page.embeds:
+                embed: Embed = page.embeds[0] if isinstance(page.embeds, list) else page.embeds
+                if embed.title is not None:
+                    label: str = f'{page_num}: {f"{embed.title[:93]}..." if len(embed.title) > 96 else embed.title}'
                 else:
-                    embed: Embed = content
-                    if embed.title is not None:
-                        label: str = f'{page_num}: {f"{embed.title[:93]}..." if len(embed.title) > 96 else embed.title}'
-                    else:
-                        label: str = f"{page_num}: No title"
-                select_options.append(SelectOption(label=label, value=page_num))
+                    label: str = f"{page_num}: No title"
+            else:
+                label: str = f"{page_num}: No title"
+            select_options.append(SelectOption(label=label, value=page_num))
 
         select = SelectMenu(
             options=select_options,
@@ -306,43 +308,12 @@ class Paginator(DictSerializerMixin):
         return list(filter(None, [self.select_row(), self.buttons_row()]))
 
     async def send(self) -> Message:
-        if self.is_dict:
-            return await self.ctx.send(
-                list(self.pages.keys())[self.index],
-                embeds=list(self.pages.values())[self.index],
-                components=self.components(),
-            )
-        return (
-            await self.ctx.send(
-                embeds=self.pages[self.index],
-                components=self.components(),
-            )
-            if self.is_embeds
-            else await self.ctx.send(
-                self.pages[self.index],
-                components=self.components(),
-            )
-        )
+        return await self.ctx.send(components=self.components(), **self.pages[self.index].json)
 
     async def edit(self) -> Message:
-        if self.is_dict:
-            return await self.component_ctx.edit(
-                list(self.pages.keys())[self.index],
-                embeds=list(self.pages.values())[self.index],
-                components=self.components(),
-            )
-        else:
-            return (
-                await self.component_ctx.edit(
-                    embeds=self.pages[self.index],
-                    components=self.components(),
-                )
-                if self.is_embeds
-                else await self.component_ctx.edit(
-                    self.pages[self.index],
-                    components=self.components(),
-                )
-            )
+        return await self.component_ctx.edit(
+            components=self.components(), **self.pages[self.index].json
+        )
 
     def disabled_components(self) -> List[ActionRow]:
         components = self.components()
@@ -351,16 +322,17 @@ class Paginator(DictSerializerMixin):
                 component.disabled = True
         return components
 
-    def deleted_components(self) -> None:
-        return None
+    def removed_components(self) -> None:
+        return
 
     async def end_paginator(self) -> None:
         await self.message.edit(
-            components=self.deleted_components()
-            if self.delete_after_timeout
+            components=self.removed_components()
+            if self.remove_after_timeout
             else self.disabled_components()
+            if self.disable_after_timeout
+            else MISSING
         )
-        ...  # TODO: implement message editing
 
     async def run_function(self, func) -> bool:
         if func is not None:
