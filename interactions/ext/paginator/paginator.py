@@ -42,8 +42,10 @@ class Data(DictSerializerMixin):
     component_ctx: ComponentContext
     message: Message
 
-    def __init__(self, **kwargs) -> None:
-        super().__init__(**kwargs)
+    def __repr__(self) -> str:
+        return f"<Data paginator={self.paginator}, original_ctx={self.original_ctx}, component_ctx={self.component_ctx}, message={self.message}>"
+
+    __str__ = __repr__
 
 
 class Page:
@@ -56,6 +58,11 @@ class Page:
     @property
     def json(self) -> Dict[str, Union[str, Embed]]:
         return {"content": self.content, "embeds": self.embeds}
+
+    def __repr__(self) -> str:
+        return f"<Page content={self.content}, embeds={self.embeds}>"
+
+    __str__ = __repr__
 
 
 class Paginator(DictSerializerMixin):
@@ -345,8 +352,14 @@ class Paginator(DictSerializerMixin):
             message=self.message,
         )
 
-    def __getattribute__(self, __name: str) -> Any:
-        attr = object.__getattribute__(self, __name)
-        if __name in object.__getattribute__(self, "__slots__") and __name != "_json":
-            object.__getattribute__(self, "_json").update({__name: attr})
-        return attr
+    def __repr__(self) -> str:
+        return f"<Paginator id={self.id}>"
+
+    __str__ = __repr__
+
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        if __name == "_json":
+            object.__setattr__(self, "_json", __value)
+        elif __name in self.__slots__:
+            self._json.update({__name: __value})
+        return super().__setattr__(__name, __value)
