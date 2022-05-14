@@ -26,7 +26,16 @@ from .errors import PaginatorWontWork, StopPaginator
 
 
 class ButtonKind(str, Enum):
-    """Enum for button types."""
+    """
+    Enum for button types.
+
+    Enums:
+
+    - `FIRST`: "first"
+    - `PREVIOUS`: "prev"
+    - `NEXT`: "next"
+    - `LAST`: "last"
+    """
 
     FIRST = "first"
     PREVIOUS = "prev"
@@ -35,6 +44,17 @@ class ButtonKind(str, Enum):
 
 
 class Data(DictSerializerMixin):
+    """
+    Data that is returned once the paginator times out.
+
+    Attrinutes:
+
+    - `paginator: Paginator`: The paginator that timed out.
+    - `original_ctx: CommandContext | ComponentContext`: The original context.
+    - `component_ctx: ComponentContext`: The context of the component.
+    - `message: Message`: The message that was sent.
+    """
+
     __slots__ = ("_json", "paginator", "original_ctx", "component_ctx", "message")
     _json: Dict[str, Any]
     paginator: "Paginator"
@@ -49,6 +69,15 @@ class Data(DictSerializerMixin):
 
 
 class Page:
+    """
+    An individual page to be supplied as a list of these pages to the paginator.
+
+    Parameters:
+
+    - `?content: str`: The content of the page.
+    - `?embeds: Embed | list[Embed]`: The embeds of the page.
+    """
+
     __slots__ = ("content", "embeds")
 
     def __init__(self, content: Optional[str] = None, embeds: Optional[Embed] = None) -> None:
@@ -66,6 +95,44 @@ class Page:
 
 
 class Paginator(DictSerializerMixin):
+    """
+    The paginator.
+
+    Parameters:
+
+    - `client: Client`: The client.
+    - `ctx: CommandContext | ComponentContext`: The context.
+    - `pages: list[Page]`: The pages to paginate.
+    - `?timeout: int | float | None`: The timeout in seconds. Defaults to 60.
+    - `?author_only: bool`: Whether to only allow the author to edit the message. Defaults to False.
+    - `?use_buttons: bool`: Whether to use buttons. Defaults to True.
+    - `?use_select: bool`: Whether to use the select menu. Defaults to True.
+    - `?extended_buttons: bool`: Whether to use extended buttons. Defaults to True.
+    - `?buttons: dict[str, Button]`: The customized buttons to use. Defaults to None. Use `ButtonKind` as the key.
+    - `?select_placeholder: str`: The placeholder to use for the select menu. Defaults to "Page".
+    - `?disable_after_timeout: bool`: Whether to disable the components after timeout. Defaults to True.
+    - `?remove_after_timeout: bool`: Whether to remove the components after timeout. Defaults to False.
+    - `?func_before_edit: Callable`: The function to run before editing the message.
+    - `?func_after_edit: Callable`: The function to run after editing the message.
+
+    Methods:
+
+    - *async* `run() -> ?Data`: Runs the paginator in a loop until timed out.
+    - *property* `custom_ids -> list[str]`: The custom IDs of the components.
+    - *async* `component_logic()`: The logic for the components when clicked.
+    - *async* `check(ctx: ComponentContext) -> bool`: Whether the paginator is for the user.
+    - *func* `select_row() -> ?ActionRow`: The select action row.
+    - *func* `buttons_row() -> ?ActionRow`: The buttons action row.
+    - *func* `components() -> list[?ActionRow]`: The components as action rows.
+    - *async* `send() -> Message`: Sends the paginator.
+    - *async* `edit() -> Message`: Edits the paginator.
+    - *func* `disabled_components() -> list[?ActionRow]`: The disabled components as action rows.
+    - *func* `removed_components()`: The removed components.
+    - *async* `end_paginator()`: Ends the paginator.
+    - *async* `run_function(func: Callable) -> bool`: Runs a function.
+    - *func* `data() -> Data`: The data of the paginator.
+    """
+
     __slots__ = (
         "_json",
         "client",
