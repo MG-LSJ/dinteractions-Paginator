@@ -7,6 +7,7 @@ from typing import Any, Callable, Coroutine, Dict, List, Optional, Union
 from interactions.ext.wait_for import setup, wait_for_component
 
 from interactions import (
+    MISSING,
     ActionRow,
     Button,
     Client,
@@ -19,7 +20,6 @@ from interactions import (
     SelectMenu,
     SelectOption,
     Snowflake,
-    MISSING,
 )
 
 from .errors import PaginatorWontWork, StopPaginator
@@ -154,11 +154,7 @@ class Paginator(DictSerializerMixin):
         self.component_ctx: Optional[ComponentContext] = kwargs.get("component_ctx")
         self.index: int = kwargs.get("index", 0)
         self.top: int = kwargs.get("top", len(pages) - 1)
-        self.message: Message = kwargs.get("message")
-        self.is_dict: bool = isinstance(pages, dict)
-        self.is_embeds: bool = isinstance(pages, list) and all(
-            isinstance(page, Embed) for page in pages
-        )
+        self.message: Optional[Message] = kwargs.get("message")
         self._msg = {"message_id": None, "channel_id": self.ctx.channel_id}
 
         self._json.update(
@@ -348,3 +344,9 @@ class Paginator(DictSerializerMixin):
             component_ctx=self.component_ctx,
             message=self.message,
         )
+
+    def __getattribute__(self, __name: str) -> Any:
+        attr = object.__getattribute__(self, __name)
+        if __name in object.__getattribute__(self, "__slots__") and __name != "_json":
+            object.__getattribute__(self, "_json").update({__name: attr})
+        return attr

@@ -88,20 +88,48 @@ client.start()
 
 # <a id="api"></a> API Reference
 
+## <a id="page"></a> Page
+
+This is an individual page to be added to the paginator.
+
+### Arguments
+
+- `?content: str`: The content of the page.
+- `?embeds: Embed | list[Embed]`: The embed(s) to be displayed on the page.
+
+### Example
+
+```py
+from interactions import Embed
+from interactions.ext.paginator import Page, Paginator
+
+pages = [
+    Page("Content 1", Embed(title="One")),
+    Page("Content 2", Embed(title="Two")),
+    Page("Content 3"),
+    Page(embeds=[Embed(title="Four"), Embed(title="Five")]),
+]
+...
+p = Paginator(..., pages=pages)
+await p.run()
+
+```
+
 ## <a id="paginator"></a> *class* Paginator
 
 ### <a id="args"></a> Arguments
 
 - [Required](#req)
 - [Optional](#opt)
+- [Attributes](#p_attrs)
 - [Returns](#returns)
 
 ### <a id="req"></a> Required
 
 - `client: Client`: The client instance
 - `ctx: CommandContext | ComponentContext`: The context
-- `pages: list[Embed] | dict[str, Embed]`: The pages to paginate.
-  - Use a `dict` if you wish to display content as well as embeds. The keys are used as the content.
+- `pages: list[Page]`: The pages to paginate.
+  - Use a list of `Page` objects.
 
 ### <a id="opt"></a> Optional
 
@@ -122,8 +150,34 @@ client.start()
 - `?remove_after_timeout: bool = True`: Whether the components should be removed after the timeout.
 - `?func_before_edit: Callable | Coroutine`: A function or coroutine that will be called before the embed is edited.
   - The function will be passed the `Paginator` and `ComponentContext` objects.
+  - Raise `StopPaginator` to stop the paginator.
+  - Return `False` to skip editing the paginator.
 - `?func_after_edit: Callable | Coroutine`: A function or coroutine that will be called after the embed is edited.
   - The function will be passed the `Paginator` and `ComponentContext` objects.
+  - Raise `StopPaginator` to stop the paginator.
+
+### <a id="p_attrs"></a> Attributes
+
+All the parameters listed above are stored as attributes in the `Paginator` object.
+
+Additional attributes:
+
+- `id: int`: The paginator's ID.
+  - A number between `0` and `999,999,999` to ensure that the paginator is unique.
+- `?component_ctx: ComponentContext`: The context of the paginator's components.
+  - This is only available if or when a component is interacted with.
+- `index: int`: The current index of the paginator.
+  - This is the index of the current page.
+- `top: int`: The index of the top page.
+- `?message: Message`: The message that the paginator is using.
+- `_msg: dict[str, ?Snowflake | int]`: A dict with the `message_id` and `channel_id` of the message.
+- `_json: dict[str, Any]`: The JSON representation of the paginator.
+  - You can utilize this to create a paginator dynamically by doing this:
+
+  ```py
+  p = Paginator(client, ctx, pages, ...)
+  another = Paginator(**p._json)
+  ```
 
 ### <a id="returns"></a> Returns
 
