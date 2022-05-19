@@ -109,7 +109,7 @@ class Paginator(DictSerializerMixin):
     - `?use_select: bool`: Whether to use the select menu. Defaults to True.
     - `?extended_buttons: bool`: Whether to use extended buttons. Defaults to True.
     - `?buttons: dict[str, Button]`: The customized buttons to use. Defaults to None. Use `ButtonKind` as the key.
-    - `?select_placeholder: str`: The placeholder to use for the select menu. Defaults to "Page".
+    - `?placeholder: str`: The placeholder to use for the select menu. Defaults to "Page".
     - `?disable_after_timeout: bool`: Whether to disable the components after timeout. Defaults to True.
     - `?remove_after_timeout: bool`: Whether to remove the components after timeout. Defaults to False.
     - `?func_before_edit: Callable`: The function to run before editing the message.
@@ -142,9 +142,10 @@ class Paginator(DictSerializerMixin):
         "author_only",
         "use_buttons",
         "use_select",
+        "use_index",
         "extended_buttons",
         "buttons",
-        "select_placeholder",
+        "placeholder",
         "disable_after_timeout",
         "remove_after_timeout",
         "func_before_edit",
@@ -166,9 +167,10 @@ class Paginator(DictSerializerMixin):
     author_only: bool
     use_buttons: bool
     use_select: bool
+    use_index: bool
     extended_buttons: bool
     buttons: Optional[Dict[str, Button]]
-    select_placeholder: str
+    placeholder: str
     disable_after_timeout: bool
     remove_after_timeout: bool
     func_before_edit: Optional[Union[Callable, Coroutine]]
@@ -191,9 +193,10 @@ class Paginator(DictSerializerMixin):
         author_only: bool = False,
         use_buttons: bool = True,
         use_select: bool = True,
+        use_index: bool = False,
         extended_buttons: bool = True,
         buttons: Optional[Dict[str, Button]] = None,
-        select_placeholder: str = "Page",
+        placeholder: str = "Page",
         disable_after_timeout: bool = True,
         remove_after_timeout: bool = False,
         func_before_edit: Optional[Union[Callable, Coroutine]] = None,
@@ -215,9 +218,10 @@ class Paginator(DictSerializerMixin):
             author_only=author_only,
             use_buttons=use_buttons,
             use_select=use_select,
+            use_index=use_index,
             extended_buttons=extended_buttons,
             buttons={} if buttons is None else buttons,
-            select_placeholder=select_placeholder,
+            placeholder=placeholder,
             disable_after_timeout=disable_after_timeout,
             remove_after_timeout=remove_after_timeout,
             func_before_edit=func_before_edit,
@@ -230,16 +234,6 @@ class Paginator(DictSerializerMixin):
         self.top: int = kwargs.get("top", len(pages) - 1)
         self.message: Optional[Message] = kwargs.get("message")
         self._msg = {"message_id": None, "channel_id": self.ctx.channel_id}
-
-        self._json.update(
-            {
-                "id": self.id,
-                "component_ctx": self.component_ctx,
-                "index": self.index,
-                "top": self.top,
-                "message": self.message,
-            }
-        )
 
     async def run(self) -> Data:
         self.message = await self.send()
@@ -287,6 +281,7 @@ class Paginator(DictSerializerMixin):
             f"select{self.id}",
             f"first{self.id}",
             f"prev{self.id}",
+            f"index{self.id}",
             f"next{self.id}",
             f"last{self.id}",
         ]
@@ -336,7 +331,7 @@ class Paginator(DictSerializerMixin):
         select = SelectMenu(
             options=select_options,
             custom_id=f"select{self.id}",
-            placeholder=f"{self.select_placeholder} {self.index + 1}/{self.top + 1}",
+            placeholder=f"{self.placeholder} {self.index + 1}/{self.top + 1}",
             min_values=1,
             max_values=1,
         )
@@ -352,6 +347,12 @@ class Paginator(DictSerializerMixin):
             if self.extended_buttons
             else None,
             self.buttons.get("prev", Button(style=1, emoji=Emoji(name="◀️"))),
+            self.buttons.get(
+                "index",
+                Button(style=1, label=f"{self.placeholder} {self.index + 1}/{self.top + 1}"),
+            )
+            if self.use_index
+            else None,
             self.buttons.get("next", Button(style=1, emoji=Emoji(name="▶️"))),
             self.buttons.get("last", Button(style=1, emoji=Emoji(name="⏭️")))
             if self.extended_buttons
@@ -363,15 +364,17 @@ class Paginator(DictSerializerMixin):
             button.custom_id = self.custom_ids[i + 1]
             button._json.update({"custom_id": button.custom_id})
             button.disabled = (
-                disabled_left if button.custom_id in self.custom_ids[1:3] else disabled_right
+                disabled_left
+                if button.custom_id in self.custom_ids[1:3]
+                else True
+                if button.custom_id == self.custom_ids[3]
+                else disabled_right
             )
-            button._json.update(
-                {
-                    "disabled": disabled_left
-                    if button.custom_id in self.custom_ids[1:3]
-                    else disabled_right
-                }
-            )
+            button._json.update({"disabled": button.disabled})
+            if button.custom_id == self.custom_ids[3]:
+                button.label = f"{self.placeholder} {self.index + 1}/{self.top + 1}"
+                button._json.update({"label": button.label})
+        print([button._json for button in list(filter(None, buttons))])
         return ActionRow(components=list(filter(None, buttons)))
 
     def components(self) -> List[ActionRow]:
