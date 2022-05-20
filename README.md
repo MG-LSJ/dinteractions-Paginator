@@ -140,12 +140,13 @@ await p.run()
 - `?author_only: bool = False`: Whether the paginator should only be used by the author.
 - `?use_buttons: bool = True`: Whether the paginator should use buttons.
 - `?use_select: bool = True`: Whether the paginator should use the select menu.
+- `?use_index: bool = False`: Whether the paginator should use the index button.
 - `?extended_buttons: bool = True`: Whether the paginator should use extended buttons.
   - They are 2 buttons that skip to the beginning or the end.
 - `?buttons: dict[str, Button]`: Custom buttons to use.
-  - The keys need to be one of the following: first, prev, next, last.
+  - The keys need to be one of the following: first, prev, index, next, last.
   - You can use the `ButtonKind` enum for this purpose.
-- `?select_placeholder: str = "Page"`: The placeholder to use for the select menu.
+- `?placeholder: str = "Page"`: The placeholder to use for the select menu.
 - `?disable_after_timeout: bool = True`: Whether the components should be disabled after the timeout.
 - `?remove_after_timeout: bool = True`: Whether the components should be removed after the timeout.
 - `?func_before_edit: Callable | Coroutine`: A function or coroutine that will be called before the embed is edited.
@@ -198,10 +199,11 @@ Additional attributes:
 
 ## <a id="buttonkind"></a> *class* ButtonKind
 
-- `FIRST`: The first button.
-- `PREVIOUS`: The previous button.
-- `NEXT`: The next button.
-- `LAST`: The last button.
+- `FIRST: "first"`: The first button.
+- `PREVIOUS: "prev"`: The previous button.
+- `INDEX: "index"`: The index button.
+- `NEXT: "next"`: The next button.
+- `LAST: "last"`: The last button.
 
 ------------------------------
 

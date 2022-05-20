@@ -31,14 +31,16 @@ class ButtonKind(str, Enum):
 
     Enums:
 
-    - `FIRST`: "first"
-    - `PREVIOUS`: "prev"
-    - `NEXT`: "next"
-    - `LAST`: "last"
+    - `FIRST: "first"`
+    - `PREVIOUS: "prev"`
+    - `INDEX: "index"`
+    - `NEXT: "next"`
+    - `LAST: "last"`
     """
 
     FIRST = "first"
     PREVIOUS = "prev"
+    INDEX = "index"
     NEXT = "next"
     LAST = "last"
 
@@ -107,6 +109,7 @@ class Paginator(DictSerializerMixin):
     - `?author_only: bool`: Whether to only allow the author to edit the message. Defaults to False.
     - `?use_buttons: bool`: Whether to use buttons. Defaults to True.
     - `?use_select: bool`: Whether to use the select menu. Defaults to True.
+    - `?use_index: bool`: Whether the paginator should use the index button. Defaults to False.
     - `?extended_buttons: bool`: Whether to use extended buttons. Defaults to True.
     - `?buttons: dict[str, Button]`: The customized buttons to use. Defaults to None. Use `ButtonKind` as the key.
     - `?placeholder: str`: The placeholder to use for the select menu. Defaults to "Page".
@@ -340,6 +343,7 @@ class Paginator(DictSerializerMixin):
     def buttons_row(self) -> Optional[ActionRow]:
         if not self.use_buttons:
             return
+
         disabled_left = self.index == 0
         disabled_right = self.index == self.top
         buttons = [
@@ -358,6 +362,7 @@ class Paginator(DictSerializerMixin):
             if self.extended_buttons
             else None,
         ]
+
         for i, button in enumerate(buttons):
             if button is None:
                 continue
@@ -374,7 +379,7 @@ class Paginator(DictSerializerMixin):
             if button.custom_id == self.custom_ids[3]:
                 button.label = f"{self.placeholder} {self.index + 1}/{self.top + 1}"
                 button._json.update({"label": button.label})
-        print([button._json for button in list(filter(None, buttons))])
+
         return ActionRow(components=list(filter(None, buttons)))
 
     def components(self) -> List[ActionRow]:
