@@ -50,7 +50,8 @@ pip install -U dinteractions-Paginator
 
 ### <a id="dep"></a> Dependencies
 
-- [discord-py-interactions](https://pypi.org/project/discord-py-interactions/) (version <=4.1.1)
+- [discord-py-interactions](https://pypi.org/project/discord-py-interactions/) (version <=4.2.0)
+- [interactions-wait-for](https://pypi.org/project/interactions-wait-for/) (version <=1.0.4)
 
 ## <a id="examples"></a> Examples
 
