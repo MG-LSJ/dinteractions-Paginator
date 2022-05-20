@@ -6,6 +6,8 @@ dinteractions-Paginator
 - Page
 - Paginator
 - StopPaginator
+- base
+- version
 """
 
 from .errors import StopPaginator
