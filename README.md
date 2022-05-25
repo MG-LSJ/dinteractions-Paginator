@@ -1,8 +1,9 @@
 # dinteractions-Paginator
 
-<img src="https://cdn.discordapp.com/attachments/871853650568417310/893303845587931176/dinteractions-Paginator_noloop.gif"></img>
+<!-- need a new gif -->
+<!-- <img src="https://cdn.discordapp.com/attachments/871853650568417310/893303845587931176/dinteractions-Paginator_noloop.gif"></img> -->
 
-Unofficial discord-interactions multi-page embed handler
+Official interactions.py paginator
 
 [![Discord](https://img.shields.io/discord/859508565101248582?color=blue&label=discord&style=for-the-badge)](https://discord.gg/UYCaSsMewk) [![PyPI - Downloads](https://img.shields.io/pypi/dm/dinteractions-Paginator?color=blue&style=for-the-badge)](https://pypi.org/project/dinteractions-Paginator/)
 
@@ -50,8 +51,8 @@ pip install -U dinteractions-Paginator
 
 ### <a id="dep"></a> Dependencies
 
-- [discord-py-interactions](https://pypi.org/project/discord-py-interactions/) (version <=4.2.0)
-- [interactions-wait-for](https://pypi.org/project/interactions-wait-for/) (version <=1.0.4)
+- [discord-py-interactions](https://pypi.org/project/discord-py-interactions/) (version >=4.2.0)
+- [interactions-wait-for](https://pypi.org/project/interactions-wait-for/) (version >=1.0.4)
 
 ## <a id="examples"></a> Examples
 
