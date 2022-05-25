@@ -206,12 +206,16 @@ class Paginator(DictSerializerMixin):
         func_after_edit: Optional[Union[Callable, Coroutine]] = None,
         **kwargs,
     ) -> None:
-        if not hasattr(client, "wait_for_component"):
-            setup(client)
         if not (use_buttons or use_select):
             raise PaginatorWontWork(
                 "You need either buttons, select, or both, or else the paginator wont work!"
             )
+        if len(pages) < 2:
+            raise PaginatorWontWork("You need more than one page!")
+        if not all(isinstance(page, Page) for page in pages):
+            raise PaginatorWontWork("All pages must be of type `Page`!")
+        if not hasattr(client, "wait_for_component"):
+            setup(client)
 
         super().__init__(
             client=client,
@@ -313,7 +317,7 @@ class Paginator(DictSerializerMixin):
         return boolean
 
     def select_row(self) -> Optional[ActionRow]:
-        if not self.use_select:
+        if not self.use_select or len(self.pages) > 25:
             return
 
         select_options = []
