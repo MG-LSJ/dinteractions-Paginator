@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 setup(
     name="dinteractions_Paginator",
     version="2.0.0",
-    description="Unofficial discord-interactions multi page embed handler",
+    description="Official interactions.py paginator",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/Toricane/dinteractions-Paginator",
