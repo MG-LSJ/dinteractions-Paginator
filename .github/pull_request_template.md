@@ -1,18 +1,15 @@
-## About this pull request
+## About
 
-Description of the pr
-
-## Changes
-
-What changes were made?
+This pull request is about (X), which does (Y).
 
 ## Checklist
 
-- [ ] I've used [black](https://pypi.org/project/black/) to format and lint code.
-- [ ] I've checked this pull request runs on `Python 3.6.X`.
-- [ ] This fixes something in [Issues](https://github.com/JUGADOR123/dinteractions-Paginator/issues).
-    - Issue:
-- [ ] This adds something new.
-- [ ] There is/are breaking change(s).
-- [ ] (If required) Relevant documentation has been updated/added.
-- [ ] This is not a code change. (README, docs, etc.)
+- [ ] I've ran `pre-commit` to format and lint the change(s) made.
+- [ ] I've checked to make sure the change(s) work on `3.8.6` and higher.
+- [ ] This fixes/solves an [Issue](https://github.com/goverfl0w/discord-interactions/issues).
+  - (If existent):
+- [ ] I've made this pull request for/as: (check all that apply)
+  - [ ] Documentation
+  - [ ] Breaking change
+  - [ ] New feature/enhancement
+  - [ ] Bugfix
