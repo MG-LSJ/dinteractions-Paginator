@@ -98,6 +98,8 @@ This is an individual page to be added to the paginator.
 
 - `?content: str`: The content of the page.
 - `?embeds: Embed | list[Embed]`: The embed(s) to be displayed on the page.
+- `?title: str`: The title of the page displayed in the select menu.
+  - Defaults to content or the title of the embed with an available title.
 
 ### Example
 

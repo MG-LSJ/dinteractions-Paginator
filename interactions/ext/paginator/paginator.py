@@ -13,7 +13,6 @@ from interactions import (
     Client,
     CommandContext,
     ComponentContext,
-    DictSerializerMixin,
     Embed,
     Emoji,
     Message,
@@ -45,6 +44,22 @@ class ButtonKind(str, Enum):
     LAST = "last"
 
 
+class DictSerializerMixin:
+    __slots__ = ("_json",)
+
+    def __init__(self, **kwargs):
+        self._json = kwargs
+
+        for key, value in kwargs.items():
+            if not hasattr(self, "__slots__") or key in self.__slots__:
+                setattr(self, key, value)
+
+        if hasattr(self, "__slots__"):
+            for _attr in self.__slots__:
+                if not hasattr(self, _attr):
+                    setattr(self, _attr, None)
+
+
 class Data(DictSerializerMixin):
     """
     Data that is returned once the paginator times out.
@@ -70,7 +85,7 @@ class Data(DictSerializerMixin):
     __str__ = __repr__
 
 
-class Page:
+class Page(DictSerializerMixin):
     """
     An individual page to be supplied as a list of these pages to the paginator.
 
@@ -78,17 +93,40 @@ class Page:
 
     - `?content: str`: The content of the page.
     - `?embeds: Embed | list[Embed]`: The embeds of the page.
+    - `?title: str`: The title of the page displayed in the select menu.
+        - Defaults to content or the title of the embed with an available title.
     """
 
-    __slots__ = ("content", "embeds")
+    __slots__ = ("_json", "content", "embeds", "title")
 
-    def __init__(self, content: Optional[str] = None, embeds: Optional[Embed] = None) -> None:
-        self.content = content
-        self.embeds = embeds
+    def __init__(
+        self,
+        content: Optional[str] = None,
+        embeds: Optional[Union[Embed, List[Embed]]] = None,
+        title: Optional[str] = None,
+    ) -> None:
+        if title:
+            self.title = title
+        elif content:
+            self.title = f"{content[:93]}..." if len(content) > 96 else content
+        elif embeds and isinstance(embeds, Embed) and embeds.title:
+            self.title = f"{embeds.title[:93]}..." if len(embeds.title) > 96 else embeds.title
+        elif embeds and isinstance(embeds, list) and embeds[0].title:
+            self.title = next(
+                (
+                    f"{embed.title[:93]}..." if len(embed.title) > 96 else embed.title
+                    for embed in embeds
+                    if embed.title
+                ),
+                "No title",
+            )
+        else:
+            self.title = "No title"
 
-    @property
-    def json(self) -> Dict[str, Union[str, Embed]]:
-        return {"content": self.content, "embeds": self.embeds}
+        super().__init__(
+            content=content,
+            embeds=embeds,
+        )
 
     def __repr__(self) -> str:
         return f"<Page content={self.content}, embeds={self.embeds}>"
@@ -320,20 +358,10 @@ class Paginator(DictSerializerMixin):
         if not self.use_select or len(self.pages) > 25:
             return
 
-        select_options = []
-        for page_num, page in enumerate(self.pages):
-            page_num += 1
-            if page.content:
-                label: str = f'{page_num}: {f"{page.content[:93]}..." if len(page.content) > 96 else page.content}'
-            elif page.embeds:
-                embed: Embed = page.embeds[0] if isinstance(page.embeds, list) else page.embeds
-                if embed.title is not None:
-                    label: str = f'{page_num}: {f"{embed.title[:93]}..." if len(embed.title) > 96 else embed.title}'
-                else:
-                    label: str = f"{page_num}: No title"
-            else:
-                label: str = f"{page_num}: No title"
-            select_options.append(SelectOption(label=label, value=page_num))
+        select_options = [
+            SelectOption(label=f"{page_num}: {page.title}", value=page_num)
+            for page_num, page in enumerate(self.pages, start=1)
+        ]
 
         select = SelectMenu(
             options=select_options,
@@ -390,11 +418,11 @@ class Paginator(DictSerializerMixin):
         return list(filter(None, [self.select_row(), self.buttons_row()]))
 
     async def send(self) -> Message:
-        return await self.ctx.send(components=self.components(), **self.pages[self.index].json)
+        return await self.ctx.send(components=self.components(), **self.pages[self.index]._json)
 
     async def edit(self) -> Message:
         return await self.component_ctx.edit(
-            components=self.components(), **self.pages[self.index].json
+            components=self.components(), **self.pages[self.index]._json
         )
 
     def disabled_components(self) -> List[ActionRow]:
